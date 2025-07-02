@@ -16,7 +16,7 @@ RUN chmod +x mvnw
 RUN ./mvnw dependency:go-offline -B
 
 # Copy the source code
-COPY src /src
+COPY src ./src
 
 # Build the application
 RUN ./mvnw clean package -DskipTests
