@@ -1,0 +1,32 @@
+services:
+  backend:
+    build:
+      context: ./ControleDeSalaFEMASSJava
+      dockerfile: Dockerfile
+    container_name: controle-sala-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./ds1-2025.1
+      dockerfile: Dockerfile
+    container_name: controle-sala-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge 
