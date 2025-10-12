@@ -23,6 +23,12 @@ public class AlocacaoSala {
     @ManyToOne
     private Sala sala;
 
+    @NotNull(message = "Disciplina é obrigatória")
+    @ManyToOne
+    @JoinColumn(name = "id_disciplina")
+    @JsonBackReference
+    private Disciplina disciplina;
+    
     @NotNull(message = "Turma é obrigatória")
     @JoinColumn(name = "id_turma")
     @ManyToOne

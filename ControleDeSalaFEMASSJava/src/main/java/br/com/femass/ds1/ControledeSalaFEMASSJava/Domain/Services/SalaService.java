@@ -25,6 +25,13 @@ public class SalaService {
     @Autowired
     private IndisponibilidadeRepository indisponibilidadeRepository;
 
+     @Autowired
+    private SalaRepository salaRepository;
+
+    public Optional<Sala> getSalaById(int id) {
+        return salaRepository.findById(id);
+    }
+
     public List<Sala> getAllSalas() {
         return salaRepository.findAll();
     }

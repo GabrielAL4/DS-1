@@ -21,6 +21,14 @@ public class TurmaService {
     public TurmaService(TurmaRepository turmaRepository) {
         this.turmaRepository = turmaRepository;
     }
+    @Autowired
+    private TurmaRepository turmaRepository;
+
+    public Optional<Turma> getTurmaById(int id) {
+        return turmaRepository.findById(id);
+    }
+
+
 
     public List<Turma> getAllTurmas() {
         return turmaRepository.findAllWithAlocacoes();
