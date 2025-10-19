@@ -50,7 +50,7 @@ export default function CadastrarSala() {
     capacidadeMaxima: "",
     possuiArCondicionado: false,
     possuiLaboratorio: false,
-    possuiLoucaDigital: false,
+    possuiLousaDigital: false,
   });
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function CadastrarSala() {
       capacidadeMaxima: parseInt(capacidade),
       possuiLaboratorio: lab ? lab : false,
       possuiArCondicionado: ar ? ar : false,
-      possuiLoucaDigital: lousa ? lousa : false,
+      possuiLousaDigital: lousa ? lousa : false,
     };
 
     console.log("Payload sendo enviado:", payload);
@@ -261,7 +261,7 @@ export default function CadastrarSala() {
       tabela[tempoIndex][diaSemanaIndex] = "X"; // Marca o horário indisponível
     });
     
-    console.log("Tabela organizada:", tabela);
+    // console.log("Tabela organizada:", tabela);
     return tabela;
   };
 
@@ -532,7 +532,7 @@ export default function CadastrarSala() {
                       {row.possuiLaboratorio ? "Sim" : "Não"}
                     </TableCell>
                     <TableCell>
-                      {row.possuiLoucaDigital ? "Sim" : "Não"}
+                      {row.possuiLousaDigital ? "Sim" : "Não"}
                     </TableCell>
                     <TableCell>
                       {/* Botão de Editar */}
@@ -618,7 +618,7 @@ export default function CadastrarSala() {
                 id="username"
                 className="col-span-3"
                 type="checkbox"
-                checked={editSala.possuiLoucaDigital}
+                checked={editSala.possuiLousaDigital}
                 onChange={(e) => handleEditChange("possuiLoucaDigital", e.target.checked)}
               />
             </div>
