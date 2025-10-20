@@ -24,8 +24,9 @@ import { SalaService } from "@/services/SalaService";
 import { TurmaService } from "@/services/TurmaService";
 import { Eye, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
-import * as XLSX from 'xlsx';
+import CriarDisciplinaModal from "./components/CriarDisciplinaModal";
 import CriarTurmaModal from "./components/CriarTurmaModal";
+import ImportarTurmasExcelModal from "./components/ImportarTurmasExcelModal";
 
 export default function AlocarTurmaSala() {
   const [tabela, setTabela] = useState([]);
@@ -65,44 +66,8 @@ export default function AlocarTurmaSala() {
   const [isDialogAllocateOpen, setIsDialogAllocateOpen] = useState(false);
 
   // Estados para o modal de upload
-  const [selectedFile, setSelectedFile] = useState(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [dialogImportarExcel, setDialogImportarExcel] = useState(false);
   const [dialogEncerrarPeriodo, setDialogEncerrarPeriodo] = useState(false);
-
-  // Função para abrir o modal de upload
-  const handleFileUpload = (e) => {
-    setSelectedFile(e.target.files[0]);
-
-    const reader = new FileReader();
-    reader.readAsBinaryString(e.target.files[0]);
-    reader.onload = (e) => {
-      const data = e.target.result;
-      const workbook = XLSX.read(data, { type: "binary" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const parsedData = XLSX.utils.sheet_to_json(sheet);
-      console.log("Dados do Excel:", parsedData);
-    };
-  };
-  const handleUploadExcel = async () => {
-    try {
-      if (!selectedFile) {
-        alert("Por favor, selecione um arquivo.");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      // const response = await SalaService.createRelatorioFinal(formData);
-      console.log("Arquivo selecionado:", selectedFile.name);
-      setDialogImportarExcel(false);
-      setSelectedFile(null);
-      // getTurmasData(); // Atualiza a tabela após upload
-    } catch (error) {
-      console.error("Erro ao enviar o arquivo:", error);
-    }
-  };
 
   //Função para encerrar período
   const handleEncerrarPeriodo = async () => {
@@ -695,13 +660,9 @@ export default function AlocarTurmaSala() {
                 <div className="flex items-center gap-2">
                   <CriarTurmaModal />
 
-                  {/* Botão para importar Excel */}
-                  <button
-                    className="rounded-md bg-blue-600 text-white p-2 min-w-[200px] h-[60px] text-center"
-                    onClick={() => setDialogImportarExcel(true)}
-                  >
-                    Importar Turmas (Excel)
-                  </button>
+                  <CriarDisciplinaModal />
+
+                  <ImportarTurmasExcelModal />
 
                   {/* Botão para abrir alocações */}
                   <button
@@ -1061,42 +1022,6 @@ export default function AlocarTurmaSala() {
                       Cancelar
                     </Button>
                     <Button onClick={handleSavePreferences}>Salvar</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
-              <Dialog
-                open={dialogImportarExcel}
-                onOpenChange={setDialogImportarExcel}
-              >
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Importar Turmas</DialogTitle>
-                    <DialogDescription>
-                      Selecione o arquivo Excel com os dados das turmas
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <input
-                      type="file"
-                      accept=".xlsx, .xls"
-                      onChange={handleFileUpload}
-                      className="border p-2 rounded"
-                    />
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setDialogImportarExcel(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={handleUploadExcel}
-                      disabled={!selectedFile}
-                    >
-                      Confirmar Importação
-                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>

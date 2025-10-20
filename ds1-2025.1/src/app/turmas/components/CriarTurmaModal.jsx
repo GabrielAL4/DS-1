@@ -2,15 +2,18 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DisciplinaService } from "@/services/DisciplinaService";
 import { SalaService } from "@/services/SalaService";
+import { TurmaService } from "@/services/TurmaService";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function CriarTurmaModal() {
   const [salas, setSalas] = useState([]);
+  const [disciplinas, setDisciplinas] = useState([]);
   const [novaTurma, setNovaTurma] = useState({
     professor: "",
-    disciplinaId: "",
+    disciplina: {},
     diaSemana: "",
     horario: "",
     turmaGrandeAntiga: false,
@@ -18,7 +21,7 @@ export default function CriarTurmaModal() {
     salaId: ""
   });
 
-  useEffect(() => {
+  const getTurmasData = () => {
     SalaService.getAllSalas()
       .then((response) => {
         console.log('Salas carregadas:', response.data);
@@ -28,6 +31,23 @@ export default function CriarTurmaModal() {
         console.log('Não foi possível requisitar todas as salas', error);
         setSalas([]);
       });
+  }
+
+  const getDisciplinasData = () => {
+    DisciplinaService.getAllDisciplinas()
+      .then((response) => {
+        console.log('Disciplinas carregadas:', response.data);
+        setDisciplinas(response.data || []);
+      })
+      .catch((error) => {
+        console.log('Não foi possível requisitar todas as salas', error);
+        setDisciplinas([]);
+      });
+  }
+
+  useEffect(() => {
+    getTurmasData();
+    getDisciplinasData();
   }, []);
 
   // Função para atualizar campos do formulário
@@ -48,11 +68,11 @@ export default function CriarTurmaModal() {
     // Validação dos campos obrigatórios
     console.log("Validando campos:", novaTurma);
 
-    if (!novaTurma.professor || !novaTurma.disciplinaId || !novaTurma.diaSemana ||
+    if (!novaTurma.professor || !novaTurma.disciplina || !novaTurma.diaSemana ||
       !novaTurma.horario || !novaTurma.bloco || !novaTurma.salaId) {
       console.log("Campos faltando:", {
         professor: !novaTurma.professor,
-        disciplinaId: !novaTurma.disciplinaId,
+        disciplina: !novaTurma.disciplina,
         diaSemana: !novaTurma.diaSemana,
         horario: !novaTurma.horario,
         bloco: !novaTurma.bloco,
@@ -116,7 +136,7 @@ export default function CriarTurmaModal() {
       // 3. Criar a turma com o nome da disciplina como string
       const turmaPayload = {
         professor: novaTurma.professor,
-        disciplina: novaTurma.disciplinaId, // Usar o nome da disciplina diretamente
+        disciplina: novaTurma.disciplina,
         quantidadeAlunos: salaEncontrada.capacidadeMaxima,
         codigoHorario: codigoHorario,
         turmaGrandeAntiga: novaTurma.turmaGrandeAntiga
@@ -144,7 +164,7 @@ export default function CriarTurmaModal() {
       // 5. Limpar formulário
       setNovaTurma({
         professor: "",
-        disciplinaId: "",
+        disciplina: {},
         diaSemana: "",
         horario: "",
         turmaGrandeAntiga: false,
@@ -152,7 +172,6 @@ export default function CriarTurmaModal() {
         salaId: ""
       });
 
-      setDialogCreateTurma(false);
       getTurmasData(); // Atualizar lista de turmas
       alert("Turma criada e alocada com sucesso!");
     } catch (error) {
@@ -163,21 +182,21 @@ export default function CriarTurmaModal() {
 
   return (
     <Dialog>
-      <form onSubmit={handleCreateTurma}>
-        <DialogTrigger asChild>
-          <Button className="rounded-md bg-green-600 text-white p-2 min-w-[200px] h-[60px] text-center flex items-center justify-center gap-2">
-            <Plus size={20} />
-            Criar Turma
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Criar Nova Turma</DialogTitle>
-            <DialogDescription>
-              Preencha os dados da nova turma
-            </DialogDescription>
-          </DialogHeader>
+      <DialogTrigger asChild>
+        <Button className="rounded-md bg-green-600 text-white p-2 min-w-[200px] h-[60px] text-center flex items-center justify-center gap-2">
+          <Plus size={20} />
+          Criar Turma
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Criar Nova Turma</DialogTitle>
+          <DialogDescription>
+            Preencha os dados da nova turma
+          </DialogDescription>
+        </DialogHeader>
 
+        <form onSubmit={handleCreateTurma}>
           <div className="grid gap-4 py-4">
             {/* Professor */}
             <div className="flex flex-col ml-6">
@@ -196,16 +215,26 @@ export default function CriarTurmaModal() {
             {/* Disciplina */}
             <div className="flex flex-col ml-6">
               <Label htmlFor="disciplina" className="pb-2">
-                Nome da Disciplina:
+                Disciplina:
               </Label>
-              <Input
+              <select
                 id="disciplina"
-                type="text"
-                value={novaTurma.disciplinaId}
-                onChange={(e) => handleNovaTurmaChange("disciplinaId", e.target.value)}
-                placeholder="Digite o nome da disciplina"
+                className="rounded-md border p-2"
+                value={novaTurma.disciplina}
+                onChange={(e) => handleNovaTurmaChange("disciplina", e.target.value)}
                 required
-              />
+              >
+                <option value="">Selecione uma disciplina</option>
+                {disciplinas && disciplinas.length > 0 ? (
+                  disciplinas.map((disciplina) => (
+                    <option key={disciplina.id} value={disciplina.id}>
+                      {disciplina.nome}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>Você não tem disciplinas cadastradas</option>
+                )}
+              </select>
             </div>
 
             {/* Dia da Semana */}
@@ -324,7 +353,7 @@ export default function CriarTurmaModal() {
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">
+              <Button type="button" variant="outline">
                 Cancelar
               </Button>
             </DialogClose>
@@ -333,8 +362,8 @@ export default function CriarTurmaModal() {
               Criar Turma
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </form>
-    </Dialog >
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
