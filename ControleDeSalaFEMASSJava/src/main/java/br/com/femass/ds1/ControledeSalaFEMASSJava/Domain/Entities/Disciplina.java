@@ -31,7 +31,7 @@ public class Disciplina {
     @NotNull(message = "informação sobre lousa é obrigatória")
     @Column(name = "lousa_digital")
     private boolean necessitaLousaDigital;
-
+/*
     @OneToMany(mappedBy = "disciplina", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<AlocacaoSala> alocacoes;
@@ -40,7 +40,7 @@ public class Disciplina {
     @JoinColumn(name = "id_turma")
     @JsonBackReference
     private Turma turma;
-
+*/
     // Getters e Setters
 
     public int getId() {
@@ -78,7 +78,7 @@ public class Disciplina {
     public void setNecessitaLousaDigital(boolean necessitaLousaDigital) {
         this.necessitaLousaDigital = necessitaLousaDigital;
     }
-
+/*
     public List<AlocacaoSala> getAlocacoes() {
         return alocacoes;
     }
@@ -94,7 +94,7 @@ public class Disciplina {
     public void setTurma(Turma turma) {
         this.turma = turma;
     }
-
+*/
     @Override
     public String toString() {
         return "Disciplina{" +
