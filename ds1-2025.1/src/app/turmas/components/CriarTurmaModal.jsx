@@ -1,5 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DisciplinaService } from "@/services/DisciplinaService";
@@ -9,11 +18,12 @@ import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function CriarTurmaModal() {
+  const [open, setOpen] = useState(false);
   const [salas, setSalas] = useState([]);
   const [disciplinas, setDisciplinas] = useState([]);
   const [novaTurma, setNovaTurma] = useState({
     professor: "",
-    disciplina: {},
+    disciplina: "",
     diaSemana: "",
     horario: "",
     turmaGrandeAntiga: false,
@@ -21,36 +31,31 @@ export default function CriarTurmaModal() {
     salaId: ""
   });
 
-  const getTurmasData = () => {
-    SalaService.getAllSalas()
-      .then((response) => {
-        console.log('Salas carregadas:', response.data);
-        setSalas(response.data || []);
-      })
-      .catch((error) => {
-        console.log('Não foi possível requisitar todas as salas', error);
-        setSalas([]);
-      });
-  }
+  const getSalasData = async () => {
+    try {
+      const response = await SalaService.getAllSalas();
+      setSalas(response.data || []);
+    } catch (error) {
+      console.error("Erro ao buscar salas:", error);
+      setSalas([]);
+    }
+  };
 
-  const getDisciplinasData = () => {
-    DisciplinaService.getAllDisciplinas()
-      .then((response) => {
-        console.log('Disciplinas carregadas:', response.data);
-        setDisciplinas(response.data || []);
-      })
-      .catch((error) => {
-        console.log('Não foi possível requisitar todas as salas', error);
-        setDisciplinas([]);
-      });
-  }
+  const getDisciplinasData = async () => {
+    try {
+      const response = await DisciplinaService.getAllDisciplinas();
+      setDisciplinas(response.data || []);
+    } catch (error) {
+      console.error("Erro ao buscar disciplinas:", error);
+      setDisciplinas([]);
+    }
+  };
 
   useEffect(() => {
-    getTurmasData();
+    getSalasData();
     getDisciplinasData();
   }, []);
 
-  // Função para atualizar campos do formulário
   const handleNovaTurmaChange = (field, value) => {
     setNovaTurma(prev => ({
       ...prev,
@@ -58,122 +63,98 @@ export default function CriarTurmaModal() {
     }));
   };
 
-  // Função para criar turma
   const handleCreateTurma = async (event) => {
     event.preventDefault();
 
-    console.log("Iniciando criação de turma...");
-    console.log("Dados do formulário:", novaTurma);
-
-    // Validação dos campos obrigatórios
-    console.log("Validando campos:", novaTurma);
-
-    if (!novaTurma.professor || !novaTurma.disciplina || !novaTurma.diaSemana ||
-      !novaTurma.horario || !novaTurma.bloco || !novaTurma.salaId) {
-      console.log("Campos faltando:", {
-        professor: !novaTurma.professor,
-        disciplina: !novaTurma.disciplina,
-        diaSemana: !novaTurma.diaSemana,
-        horario: !novaTurma.horario,
-        bloco: !novaTurma.bloco,
-        salaId: !novaTurma.salaId
-      });
+    if (
+      !novaTurma.professor ||
+      !novaTurma.disciplina ||
+      !novaTurma.diaSemana ||
+      !novaTurma.horario ||
+      !novaTurma.bloco ||
+      !novaTurma.salaId
+    ) {
       alert("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
     try {
-      // 1. Buscar a sala pelo ID para obter a capacidade
-      const salasResponse = await SalaService.getAllSalas();
-      console.log("Salas disponíveis:", salasResponse.data);
-      console.log("Sala ID selecionada:", novaTurma.salaId);
-
-      const salaEncontrada = salasResponse.data.find(sala => sala.id.toString() === novaTurma.salaId);
-      console.log("Sala encontrada:", salaEncontrada);
-
-      if (!salaEncontrada) {
-        alert("Sala não encontrada. Verifique a seleção da sala.");
+      // Busca dados da disciplina completa
+      const disciplinaSelecionada = disciplinas.find(
+        d => d.id.toString() === novaTurma.disciplina
+      );
+      if (!disciplinaSelecionada) {
+        alert("Disciplina não encontrada.");
         return;
       }
 
-      // 2. Mapear dia da semana e horário para código de horário
+      // Busca dados da sala
+      const salaSelecionada = salas.find(
+        s => s.id.toString() === novaTurma.salaId
+      );
+      if (!salaSelecionada) {
+        alert("Sala não encontrada.");
+        return;
+      }
+
+      // Cálculo de código de horário (exemplo simples, adapte se tiver mapping)
       const diaSemanaToCode = {
-        'MONDAY': 1,
-        'TUESDAY': 2,
-        'WEDNESDAY': 3,
-        'THURSDAY': 4,
-        'FRIDAY': 5
+        MONDAY: 1,
+        TUESDAY: 2,
+        WEDNESDAY: 3,
+        THURSDAY: 4,
+        FRIDAY: 5
       };
 
       const horarioToCode = {
-        'TEMPO1': 1,
-        'TEMPO2': 2,
-        'TEMPO3': 3
+        TEMPO1: 1,
+        TEMPO2: 2,
+        TEMPO3: 3,
+        TEMPO4: 4,
+        TEMPO5: 5,
+        TEMPO6: 6
       };
 
-      // Encontrar o código de horário baseado no mapeamento
-      let codigoHorario = 0;
-      for (const [codigo, horarios] of Object.entries(horarioMapping)) {
-        for (const horario of horarios) {
-          if (horario.diaSemana === diaSemanaToCode[novaTurma.diaSemana] &&
-            horario.tempoAula === horarioToCode[novaTurma.horario]) {
-            codigoHorario = parseInt(codigo);
-            break;
-          }
-        }
-        if (codigoHorario > 0) break;
-      }
-
-      // Se não encontrou no mapeamento, usar um código padrão baseado no dia
-      if (codigoHorario === 0) {
-        codigoHorario = diaSemanaToCode[novaTurma.diaSemana];
-      }
-
-      console.log("Código de horário calculado:", codigoHorario);
-      console.log("Dia da semana:", novaTurma.diaSemana);
-      console.log("Horário:", novaTurma.horario);
-
-      // 3. Criar a turma com o nome da disciplina como string
+      // Monta payload da turma conforme backend exige
       const turmaPayload = {
+        id: 0,
         professor: novaTurma.professor,
-        disciplina: novaTurma.disciplina,
-        quantidadeAlunos: salaEncontrada.capacidadeMaxima,
-        codigoHorario: codigoHorario,
+        disciplina: disciplinaSelecionada.nome,
+        quantidadeAlunos: salaSelecionada.capacidadeMaxima,
+        codigoHorario: horarioToCode[novaTurma.horario],
         turmaGrandeAntiga: novaTurma.turmaGrandeAntiga
       };
 
-      console.log("Payload da turma sendo enviado:", turmaPayload);
-      console.log("Payload JSON:", JSON.stringify(turmaPayload));
+      console.log("Payload de criação de turma:", turmaPayload);
 
       const turmaResponse = await TurmaService.createTurma(turmaPayload);
-      console.log("Resposta da criação da turma:", turmaResponse);
       const turmaCriada = turmaResponse.data;
-      console.log("Turma criada:", turmaCriada);
 
-      // 4. Criar alocação da turma na sala
+      // Monta payload da alocação conforme backend exige
       const alocacaoPayload = {
-        turmaId: turmaCriada.id,
-        salaId: salaEncontrada.id,
+        idTurma: turmaCriada.id,
+        idSala: salaSelecionada.id,
         diaSemana: novaTurma.diaSemana,
         tempo: novaTurma.horario
       };
 
-      console.log("Payload da alocação:", alocacaoPayload);
+      console.log("Payload de alocação:", alocacaoPayload);
+
       await TurmaService.createAlocacaoTurma(alocacaoPayload);
 
-      // 5. Limpar formulário
+      alert("Turma criada e alocada com sucesso!");
+
+      // Fecha modal e limpa campos
+      setOpen(false);
       setNovaTurma({
         professor: "",
-        disciplina: {},
+        disciplina: "",
         diaSemana: "",
         horario: "",
         turmaGrandeAntiga: false,
         bloco: "",
         salaId: ""
       });
-
-      getTurmasData(); // Atualizar lista de turmas
-      alert("Turma criada e alocada com sucesso!");
     } catch (error) {
       console.error("Erro ao criar turma:", error);
       alert("Erro ao criar turma. Verifique os dados e tente novamente.");
@@ -181,13 +162,17 @@ export default function CriarTurmaModal() {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-md bg-green-600 text-white p-2 min-w-[200px] h-[60px] text-center flex items-center justify-center gap-2">
+        <Button
+          className="rounded-md bg-green-600 text-white p-2 min-w-[200px] h-[60px] flex items-center justify-center gap-2"
+          onClick={() => setOpen(true)}
+        >
           <Plus size={20} />
           Criar Turma
         </Button>
       </DialogTrigger>
+
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Criar Nova Turma</DialogTitle>
@@ -225,15 +210,11 @@ export default function CriarTurmaModal() {
                 required
               >
                 <option value="">Selecione uma disciplina</option>
-                {disciplinas && disciplinas.length > 0 ? (
-                  disciplinas.map((disciplina) => (
-                    <option key={disciplina.id} value={disciplina.id}>
-                      {disciplina.nome}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>Você não tem disciplinas cadastradas</option>
-                )}
+                {disciplinas.map((disciplina) => (
+                  <option key={disciplina.id} value={disciplina.id}>
+                    {disciplina.nome}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -274,6 +255,9 @@ export default function CriarTurmaModal() {
                 <option value="TEMPO1">1º Horário</option>
                 <option value="TEMPO2">2º Horário</option>
                 <option value="TEMPO3">3º Horário</option>
+                <option value="TEMPO4">4º Horário</option>
+                <option value="TEMPO5">5º Horário</option>
+                <option value="TEMPO6">6º Horário</option>
               </select>
             </div>
 
@@ -324,31 +308,13 @@ export default function CriarTurmaModal() {
                 required
               >
                 <option value="">Selecione uma sala</option>
-                {salas && salas.length > 0 ? (
-                  salas.map((sala) => (
-                    <option key={sala.id} value={sala.id}>
-                      {sala.numero} (Capacidade: {sala.capacidadeMaxima})
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>Você não tem salas cadastradas</option>
-                )}
+                {salas.map((sala) => (
+                  <option key={sala.id} value={sala.id}>
+                    {sala.numero} (Capacidade: {sala.capacidadeMaxima})
+                  </option>
+                ))}
               </select>
             </div>
-
-            {/* Capacidade da Sala Selecionada */}
-            {novaTurma.salaId && Array.isArray(salas) && (
-              <div className="flex flex-col ml-6">
-                <Label className="pb-2 text-green-600 font-semibold">
-                  Capacidade da Sala: {
-                    (() => {
-                      const salaEncontrada = salas.find(sala => sala.id && sala.id.toString() === novaTurma.salaId);
-                      return salaEncontrada?.capacidadeMaxima ?? 'N/A';
-                    })()
-                  } alunos
-                </Label>
-              </div>
-            )}
           </div>
 
           <DialogFooter>
@@ -357,10 +323,7 @@ export default function CriarTurmaModal() {
                 Cancelar
               </Button>
             </DialogClose>
-
-            <Button type="submit">
-              Criar Turma
-            </Button>
+            <Button type="submit">Criar Turma</Button>
           </DialogFooter>
         </form>
       </DialogContent>

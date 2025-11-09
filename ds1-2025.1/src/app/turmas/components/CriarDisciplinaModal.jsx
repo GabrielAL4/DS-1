@@ -6,6 +6,7 @@ import { DisciplinaService } from "@/services/DisciplinaService";
 import { useState } from "react";
 
 export default function CriarDisciplinaModal() {
+  const [open, setOpen] = useState(false);
   const [novaDisciplina, setNovaDisciplina] = useState({
     nome: "",
     disciplinaId: 0,
@@ -39,9 +40,21 @@ export default function CriarDisciplinaModal() {
         necessitaLousaDigital: novaDisciplina.necessitaLousaDigital
       }
 
-      const response = await DisciplinaService.createDisciplina(disciplinaPayload);
+      await DisciplinaService.createDisciplina(disciplinaPayload);
 
-      console.log(response);
+      alert("Disciplina criada com sucesso!");
+
+      // Fecha o modal
+      setOpen(false);
+
+      // Limpa o formulário
+      setNovaDisciplina({
+        nome: "",
+        disciplinaId: 0,
+        necessitaLaboratiorio: false,
+        necessitaArCondicionado: false,
+        necessitaLousaDigital: false,
+      });
     } catch (error) {
       console.error("Erro ao criar disciplina:", error);
       alert("Erro ao criar disciplina. Verifique os dados e tente novamente.");
@@ -49,9 +62,14 @@ export default function CriarDisciplinaModal() {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-md bg-green-600 text-white p-2 min-w-[200px] h-[60px] text-center flex items-center justify-center gap-2">Criar Disciplina</Button>
+        <Button
+          className="rounded-md bg-green-600 text-white p-2 min-w-[200px] h-[60px] text-center flex items-center justify-center gap-2"
+          onClick={() => setOpen(true)}
+        >
+          Criar Disciplina
+        </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[600px]">

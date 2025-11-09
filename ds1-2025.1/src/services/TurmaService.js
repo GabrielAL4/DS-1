@@ -2,9 +2,7 @@ import { httpClient } from "./httpClient";
 
 export class TurmaService {
   static async createTurma(payload) {
-    console.log("TurmaService.createTurma - Payload:", payload);
     const response = await httpClient.post('/Turma', payload);
-    console.log("TurmaService.createTurma - Response:", response);
 
     return response;
   }
