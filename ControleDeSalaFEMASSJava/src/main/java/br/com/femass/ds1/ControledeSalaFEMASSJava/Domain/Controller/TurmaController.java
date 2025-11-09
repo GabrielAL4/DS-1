@@ -35,31 +35,6 @@ public class TurmaController {
     @Autowired
     private DisciplinaService disciplinaService;
 
-    // DTO para criação de turma
-    public static class CreateTurmaRequest {
-        private String professor;
-        private String disciplina; // Nome da disciplina como string
-        private int quantidadeAlunos;
-        private int codigoHorario;
-        private boolean turmaGrandeAntiga;
-
-        // Getters e Setters
-        public String getProfessor() { return professor; }
-        public void setProfessor(String professor) { this.professor = professor; }
-        
-        public String getDisciplina() { return disciplina; }
-        public void setDisciplina(String disciplina) { this.disciplina = disciplina; }
-        
-        public int getQuantidadeAlunos() { return quantidadeAlunos; }
-        public void setQuantidadeAlunos(int quantidadeAlunos) { this.quantidadeAlunos = quantidadeAlunos; }
-        
-        public int getCodigoHorario() { return codigoHorario; }
-        public void setCodigoHorario(int codigoHorario) { this.codigoHorario = codigoHorario; }
-        
-        public boolean getTurmaGrandeAntiga() { return turmaGrandeAntiga; }
-        public void setTurmaGrandeAntiga(boolean turmaGrandeAntiga) { this.turmaGrandeAntiga = turmaGrandeAntiga; }
-    }
-
     @GetMapping
     public ResponseEntity<List<Turma>> getAllTurmas() {
         List<Turma> turmas = turmaService.getAllTurmas();
@@ -74,49 +49,9 @@ public class TurmaController {
     }
 
     @PostMapping
-    public ResponseEntity<Turma> createTurma(@RequestBody CreateTurmaRequest request) {
-        try {
-            System.out.println("Recebendo request para criar turma: " + request.getProfessor() + " - " + request.getDisciplina());
-            
-            // Buscar ou criar a disciplina
-            Disciplina disciplina;
-            Optional<Disciplina> disciplinaExistente = disciplinaService.getAllDisciplinas()
-                .stream()
-                .filter(d -> d.getNome().equalsIgnoreCase(request.getDisciplina()))
-                .findFirst();
-            
-            if (disciplinaExistente.isPresent()) {
-                disciplina = disciplinaExistente.get();
-                System.out.println("Disciplina existente encontrada: " + disciplina.getNome());
-            } else {
-                // Criar nova disciplina
-                Disciplina novaDisciplina = new Disciplina();
-                novaDisciplina.setNome(request.getDisciplina());
-                novaDisciplina.setNecessitaLaboratiorio(false);
-                novaDisciplina.setNecessitaArCondicionado(false);
-                novaDisciplina.setNecessitaLousaDigital(false);
-                disciplina = disciplinaService.createDisciplina(novaDisciplina);
-                System.out.println("Nova disciplina criada: " + disciplina.getNome());
-            }
-            
-            // Criar a turma
-            Turma turma = new Turma();
-            turma.setProfessor(request.getProfessor());
-            turma.setDisciplina(disciplina);
-            turma.setQuantidadeAlunos(request.getQuantidadeAlunos());
-            turma.setCodigoHorario(request.getCodigoHorario());
-            turma.setTurmaGrandeAntiga(request.getTurmaGrandeAntiga());
-            
-            System.out.println("Criando turma com código de horário: " + request.getCodigoHorario());
-            
-            Turma savedTurma = turmaService.createTurma(turma);
-            System.out.println("Turma criada com sucesso: " + savedTurma.getId());
-            return new ResponseEntity<>(savedTurma, HttpStatus.CREATED);
-        } catch (Exception e) {
-            System.err.println("Erro ao criar turma: " + e.getMessage());
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<Turma> createTurma(@RequestBody Turma turma) {
+        Turma savedTurma = turmaService.createTurma(turma);
+        return new ResponseEntity<>(savedTurma, HttpStatus.CREATED);
     }
 
     @PostMapping("/alocar-turma")
