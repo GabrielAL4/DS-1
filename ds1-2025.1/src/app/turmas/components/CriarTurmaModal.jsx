@@ -23,7 +23,7 @@ export default function CriarTurmaModal() {
   const [disciplinas, setDisciplinas] = useState([]);
   const [novaTurma, setNovaTurma] = useState({
     professor: "",
-    disciplina: "",
+    disciplina: {},
     diaSemana: "",
     horario: "",
     turmaGrandeAntiga: false,
@@ -119,7 +119,7 @@ export default function CriarTurmaModal() {
       const turmaPayload = {
         id: 0,
         professor: novaTurma.professor,
-        disciplina: disciplinaSelecionada.nome,
+        disciplina: disciplinaSelecionada,
         quantidadeAlunos: salaSelecionada.capacidadeMaxima,
         codigoHorario: horarioToCode[novaTurma.horario],
         turmaGrandeAntiga: novaTurma.turmaGrandeAntiga

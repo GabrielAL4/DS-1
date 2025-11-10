@@ -211,8 +211,8 @@ export default function AlocarTurmaSala() {
     const turma = {
       turmaId: selectedTurma.id,
       salaId: selectedSala.id,
-      diaSemana: diaSemanaMap[parseInt(filterDia)],
-      tempo: tempoMap[parseInt(filterHora)],
+      diaSemana: diaSemanaMap[filterDia],
+      tempo: tempoMap[filterHora],
     }
 
     TurmaService.createAlocacaoTurma(turma)
@@ -310,8 +310,8 @@ export default function AlocarTurmaSala() {
 
       for (const horario of horarios) {
         const payload = {
-          turmaId: turma.id,
-          salaId: selectedSala.id,
+          idTurma: turma.id,
+          idSala: selectedSala.id,
           diaSemana: diaSemanaMap[horario.diaSemana],
           tempo: tempoMap[horario.tempoAula],
         };
