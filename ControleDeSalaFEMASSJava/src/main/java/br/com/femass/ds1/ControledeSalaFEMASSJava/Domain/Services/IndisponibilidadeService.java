@@ -1,7 +1,6 @@
 package br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services;
 
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Indisponibilidade;
-import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Sala;
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Repositories.IndisponibilidadeRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -52,10 +51,6 @@ public class IndisponibilidadeService {
 
     public void deleteIndisponibilidade(int id) {
         indisponibilidadeRepository.deleteById(id);
-    }
-
-    public List<Indisponibilidade> getIndisponibilidadesBySala(Sala sala) {
-        return indisponibilidadeRepository.findBySala(sala);
     }
 
 }

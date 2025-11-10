@@ -5,8 +5,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "tb_turma")
@@ -30,17 +28,13 @@ public class Turma {
     private int quantidadeAlunos;
 
     @Min(value = 1,message="Horário deve ser maior que 0")
-    @Max(value = 53,message="Horário deve ser menor ou igual a 53")
+    @Max(value = 6,message="Horário deve ser menor ou igual a 6")
     @Column(name="codigo_horario")
     private int codigoHorario;
 
     @NotNull(message="Informação sobre grade antiga é obrigatória")
     @Column(name="turma_grade_antiga")
     private boolean turmaGrandeAntiga;
-
-    @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<AlocacaoSala> alocacoes;
 
     public int getId() {
         return id;
@@ -72,12 +66,12 @@ public class Turma {
     }
 
     @Min(value = 1, message = "Horário deve ser maior que 0")
-    @Max(value = 53, message = "Horário deve ser menor ou igual a 53")
+    @Max(value = 6, message = "Horário deve ser menor ou igual a 6")
     public int getCodigoHorario() {
         return codigoHorario;
     }
 
-    public void setCodigoHorario(@Min(value = 1, message = "Horário deve ser maior que 0") @Max(value = 53, message = "Horário deve ser menor ou igual a 53") int codigoHorario) {
+    public void setCodigoHorario(@Min(value = 1, message = "Horário deve ser maior que 0") @Max(value = 6, message = "Horário deve ser menor ou igual a 6") int codigoHorario) {
         this.codigoHorario = codigoHorario;
     }
 
@@ -88,14 +82,6 @@ public class Turma {
 
     public void setTurmaGrandeAntiga(@NotNull(message = "Informação sobre grade antiga é obrigatória") boolean turmaGrandeAntiga) {
         this.turmaGrandeAntiga = turmaGrandeAntiga;
-    }
-
-    public List<AlocacaoSala> getAlocacoes() {
-        return alocacoes;
-    }
-
-    public void setAlocacoes(List<AlocacaoSala> alocacoes) {
-        this.alocacoes = alocacoes;
     }
 
     @Override

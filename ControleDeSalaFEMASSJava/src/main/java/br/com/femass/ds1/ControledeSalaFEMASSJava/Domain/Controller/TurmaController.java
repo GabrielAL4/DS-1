@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.DayOfWeek;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -34,6 +35,13 @@ public class TurmaController {
 
     @Autowired
     private DisciplinaService disciplinaService;
+
+    public record AlocacaoRequest(
+            int idTurma,
+            int idSala,
+            DayOfWeek diaSemana,
+            TempoSala tempo
+    ) {}
 
     @GetMapping
     public ResponseEntity<List<Turma>> getAllTurmas() {
@@ -54,12 +62,13 @@ public class TurmaController {
         return new ResponseEntity<>(savedTurma, HttpStatus.CREATED);
     }
 
-    @PostMapping("/alocar-turma")
-    public ResponseEntity<AlocacaoSala> alocarTurma(@RequestBody AlocacaoTurmaRequest request) {
-        Turma turma = turmaService.getTurmaById(request.getTurmaId()).orElseThrow();
-        Sala sala = salaService.getSalaById(request.getSalaId()).orElseThrow();
-        AlocacaoSala alocacaoSala = new AlocacaoSala(sala, turma, request.getDiaSemana(), request.getTempo());
-        alocacaoSalaService.createAlocacao(alocacaoSala);
+    @PostMapping("/{alocar-turma}")
+    public ResponseEntity<AlocacaoSala> alocarTurma(@RequestBody AlocacaoRequest payload) {
+        Turma turma = turmaService.getTurmaById(payload.idTurma).orElseThrow();
+        Sala sala = salaService.getSalaById(payload.idSala).orElseThrow();
+
+        AlocacaoSala alocacaoSala = new AlocacaoSala(sala, turma, payload.diaSemana, payload.tempo);
+        // ...
         return new ResponseEntity<>(alocacaoSala, HttpStatus.CREATED);
     }
 
@@ -83,11 +92,11 @@ public class TurmaController {
 
     @GetMapping("/disciplina/{disciplinaId}")
     public ResponseEntity<List<Turma>> getTurmasByDisciplina(@PathVariable int disciplinaId) {
-         Disciplina disciplina = disciplinaService.getDisciplinaById(disciplinaId).orElse(null);
-         if (disciplina == null) {
-             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-         }
-         List<Turma> turmas = turmaService.getTurmasByDisciplina(disciplina);
-         return new ResponseEntity<>(turmas, HttpStatus.OK);
+        Disciplina disciplina = disciplinaService.getDisciplinaById(disciplinaId).orElse(null);
+        if (disciplina == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        List<Turma> turmas = turmaService.getTurmasByDisciplina(disciplina);
+        return new ResponseEntity<>(turmas, HttpStatus.OK);
     }
 }

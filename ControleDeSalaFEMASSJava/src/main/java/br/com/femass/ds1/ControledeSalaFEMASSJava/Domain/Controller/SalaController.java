@@ -7,10 +7,13 @@ import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services.Indisponibilid
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services.SalaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Optional;
@@ -38,18 +41,6 @@ public class SalaController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @GetMapping("/{id}/com-indisponibilidades")
-    public ResponseEntity<SalaComIndisponibilidadesResponse> getSalaWithIndisponibilidades(@PathVariable int id) {
-        Optional<Sala> salaOpt = salaService.getSalaById(id);
-        if (salaOpt.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        Sala sala = salaOpt.get();
-        List<Indisponibilidade> indisponibilidades = indisponibilidadeService.getIndisponibilidadesBySala(sala);
-        SalaComIndisponibilidadesResponse response = new SalaComIndisponibilidadesResponse(sala, indisponibilidades);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
     @GetMapping("/obter-salas-disponiveis")
     public ResponseEntity<List<Sala>> getSalasDisponiveisParaAlocacao(
             @RequestParam("diaSemana") DayOfWeek diaSemana,
@@ -65,11 +56,11 @@ public class SalaController {
     }
 
     @PostMapping("/{idSala}/indisponibilidade")
-    public ResponseEntity<Indisponibilidade> createIndisponibilidade(@PathVariable int idSala, @RequestBody IndisponibilidadeRequest request) {
+    public ResponseEntity<Indisponibilidade> createIndisponibilidade(@PathVariable int idSala, @RequestBody DayOfWeek diaSemana, @RequestBody TempoSala tempoSala) {
         Sala sala = salaService.getSalaById(idSala).orElseThrow();
-        Indisponibilidade indisponibilidade = new Indisponibilidade(sala, request.getDiaSemana(), request.getTempo());
-        Indisponibilidade savedIndisponibilidade = indisponibilidadeService.createIndisponibilidade(indisponibilidade);
-        return new ResponseEntity<>(savedIndisponibilidade, HttpStatus.CREATED);
+        Indisponibilidade indisponibilidade = new Indisponibilidade(sala, diaSemana, tempoSala);
+        indisponibilidadeService.createIndisponibilidade(indisponibilidade);
+        return new ResponseEntity<>(indisponibilidade, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -89,4 +80,5 @@ public class SalaController {
         indisponibilidadeService.deleteIndisponibilidade(indisponibilidadeId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
 }

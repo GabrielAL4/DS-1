@@ -1,17 +1,16 @@
 package br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services;
 
-import java.util.List;
-import java.util.Optional;
-
+import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Disciplina;
+import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Turma;
+import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Repositories.TurmaRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Disciplina;
-import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Turma;
-import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Repositories.TurmaRepository;
-import jakarta.transaction.Transactional;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TurmaService {
@@ -24,7 +23,7 @@ public class TurmaService {
     }
 
     public List<Turma> getAllTurmas() {
-        return turmaRepository.findAllWithAlocacoes();
+        return turmaRepository.findAll();
     }
 
     public Optional<Turma> getTurmaById(int id) {
@@ -38,8 +37,7 @@ public class TurmaService {
     @Transactional
     public Turma updateTurma(int id, Turma turmaAtualizada) {
         Turma existingTurma = turmaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Turma não encontrada com o ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Turma não encontrada com o ID: " + id));
 
         existingTurma.setProfessor(turmaAtualizada.getProfessor());
         existingTurma.setDisciplina(turmaAtualizada.getDisciplina());

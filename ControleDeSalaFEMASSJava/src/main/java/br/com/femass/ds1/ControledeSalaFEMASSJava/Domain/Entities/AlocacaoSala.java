@@ -3,7 +3,6 @@ package br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities;
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Enums.TempoSala;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.time.DayOfWeek;
 
@@ -23,16 +22,9 @@ public class AlocacaoSala {
     @ManyToOne
     private Sala sala;
 
-    @NotNull(message = "Disciplina é obrigatória")
-    @ManyToOne
-    @JoinColumn(name = "id_disciplina")
-    @JsonBackReference
-    private Disciplina disciplina;
-    
     @NotNull(message = "Turma é obrigatória")
     @JoinColumn(name = "id_turma")
     @ManyToOne
-    @JsonBackReference
     private Turma turma;
 
     @NotNull(message = "Dia da semana é obrigatório!")
@@ -42,6 +34,8 @@ public class AlocacaoSala {
     @NotNull(message = "Tempo é obrigatório!")
     @Column(name = "tempo")
     private TempoSala tempo;
+
+    public AlocacaoSala(){}
 
     public AlocacaoSala(Sala sala, Turma turma, DayOfWeek diaSemana, TempoSala tempo) {
         this.sala = sala;
