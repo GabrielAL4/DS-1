@@ -15,12 +15,8 @@ import java.util.Optional;
 @Service
 public class TurmaService {
 
-    private final TurmaRepository turmaRepository;
-
     @Autowired
-    public TurmaService(TurmaRepository turmaRepository) {
-        this.turmaRepository = turmaRepository;
-    }
+    TurmaRepository turmaRepository;
 
     public List<Turma> getAllTurmas() {
         return turmaRepository.findAll();
