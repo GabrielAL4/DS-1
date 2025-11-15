@@ -135,8 +135,8 @@ export default function CadastrarSala() {
     };
 
     const indisponibilidade = {
-      diaSemana: diaSemanaMapping[parseInt(selectedDiaSemana)],
-      tempo: tempoMapping[parseInt(selectedHorario)],
+      diaSemana: parseInt(selectedDiaSemana),
+      tempo: parseInt(selectedHorario),
     };
 
     SalaService.createIndisponibilidadeSala(selectedSalaId, indisponibilidade)

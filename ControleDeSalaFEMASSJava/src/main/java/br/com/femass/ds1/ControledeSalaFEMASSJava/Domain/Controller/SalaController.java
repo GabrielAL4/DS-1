@@ -28,6 +28,11 @@ public class SalaController {
     @Autowired
     private IndisponibilidadeService indisponibilidadeService;
 
+    public record IndisponibilidadeRequest(
+            DayOfWeek diaSemana,
+            TempoSala tempo
+    ) {}
+
     @GetMapping
     public ResponseEntity<List<Sala>> getAllSalas() {
         List<Sala> salas = salaService.getAllSalas();
@@ -56,11 +61,18 @@ public class SalaController {
     }
 
     @PostMapping("/{idSala}/indisponibilidade")
-    public ResponseEntity<Indisponibilidade> createIndisponibilidade(@PathVariable int idSala, @RequestBody DayOfWeek diaSemana, @RequestBody TempoSala tempoSala) {
+    public ResponseEntity<Indisponibilidade> createIndisponibilidade(@PathVariable int idSala, @RequestBody IndisponibilidadeRequest indisponibilidadeRecord) {
         Sala sala = salaService.getSalaById(idSala).orElseThrow();
-        Indisponibilidade indisponibilidade = new Indisponibilidade(sala, diaSemana, tempoSala);
+        Indisponibilidade indisponibilidade = new Indisponibilidade(sala, indisponibilidadeRecord.diaSemana, indisponibilidadeRecord.tempo);
         indisponibilidadeService.createIndisponibilidade(indisponibilidade);
         return new ResponseEntity<>(indisponibilidade, HttpStatus.CREATED);
+    }
+
+    @GetMapping("{idSala}/com-indisponibilidades")
+    public ResponseEntity<List<Indisponibilidade>> checkSalaComIndisponibilidade(@PathVariable int idSala) {
+        Sala sala = salaService.getSalaById(idSala).orElseThrow();
+        List<Indisponibilidade> indisponibilidades = indisponibilidadeService.getAllIndisponibilidadesBySala(sala);
+        return new ResponseEntity<>(indisponibilidades, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")

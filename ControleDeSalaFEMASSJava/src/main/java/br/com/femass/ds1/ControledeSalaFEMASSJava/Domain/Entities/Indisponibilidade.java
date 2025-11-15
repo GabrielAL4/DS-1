@@ -28,6 +28,8 @@ public class Indisponibilidade {
     @Column(name = "tempo")
     private TempoSala tempo;
 
+    public Indisponibilidade(){}
+
     public Indisponibilidade(Sala sala, DayOfWeek diaSemana, TempoSala tempo) {
         this.sala = sala;
         this.diaSemana = diaSemana;
