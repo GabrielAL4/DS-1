@@ -9,6 +9,7 @@ import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services.AlocacaoSalaSe
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services.DisciplinaService;
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services.SalaService;
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services.TurmaService;
+import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Utils.ImportarExcel;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,12 +37,16 @@ public class TurmaController {
     @Autowired
     private DisciplinaService disciplinaService;
 
+    @Autowired
+    private ImportarExcel importarExcel;
+
     public record AlocacaoRequest(
             int idTurma,
             int idSala,
             DayOfWeek diaSemana,
             TempoSala tempo
-    ) {}
+    ) {
+    }
 
     @GetMapping
     public ResponseEntity<List<Turma>> getAllTurmas() {
@@ -98,5 +103,13 @@ public class TurmaController {
         }
         List<Turma> turmas = turmaService.getTurmasByDisciplina(disciplina);
         return new ResponseEntity<>(turmas, HttpStatus.OK);
+    }
+
+    @PostMapping("/importarExcel")
+    public ResponseEntity<Void> importarExcel(@RequestBody String jsonFile) {
+        int response =  importarExcel.importarDadosJson(jsonFile);
+        if (response > 0)
+            return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

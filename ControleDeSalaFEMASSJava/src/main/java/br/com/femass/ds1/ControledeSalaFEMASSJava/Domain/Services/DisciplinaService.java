@@ -34,6 +34,10 @@ public class DisciplinaService {
         return disciplinaRepository.save(disciplina);
     }
 
+    public Disciplina findDisciplinaByNome(String nome) {
+        return disciplinaRepository.findDisciplinaByNome(nome);
+    }
+
     @Transactional
     public Disciplina updateDisciplina(int id, Disciplina updatedDisciplina) {
         Disciplina existingDisciplina = disciplinaRepository.findById(id)
