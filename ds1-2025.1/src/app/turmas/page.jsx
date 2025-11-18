@@ -202,7 +202,10 @@ export default function AlocarTurmaSala() {
     const tempoMap = {
       1: "TEMPO1",
       2: "TEMPO2",
-      3: "TEMPO3"
+      3: "TEMPO3",
+      4: "TEMPO4",
+      5: "TEMPO5",
+      6: "TEMPO6",
     };
 
     const turma = {
@@ -240,7 +243,10 @@ export default function AlocarTurmaSala() {
       const tempoMap = {
         1: "TEMPO1",
         2: "TEMPO2",
-        3: "TEMPO3"
+        3: "TEMPO3",
+        4: "TEMPO4",
+        5: "TEMPO5",
+        6: "TEMPO6",
       };
 
       const salasDisponiveisPorHorario = await Promise.all(
@@ -655,8 +661,8 @@ export default function AlocarTurmaSala() {
                   <option value="2">2</option>
                   <option value="3">3</option>
                 </select>
-                <div className="flex items-center gap-2">
-                  <CriarTurmaModal />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <CriarTurmaModal setTabela={setTabela} />
 
                   <CriarDisciplinaModal />
 
