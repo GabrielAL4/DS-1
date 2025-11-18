@@ -24,7 +24,6 @@ export default function CriarTurmaModal() {
   const [novaTurma, setNovaTurma] = useState({
     professor: "",
     disciplina: {},
-    diaSemana: "",
     horario: "",
     turmaGrandeAntiga: false,
     bloco: "",
@@ -69,7 +68,6 @@ export default function CriarTurmaModal() {
     if (
       !novaTurma.professor ||
       !novaTurma.disciplina ||
-      !novaTurma.diaSemana ||
       !novaTurma.horario ||
       !novaTurma.bloco ||
       !novaTurma.salaId
@@ -97,15 +95,6 @@ export default function CriarTurmaModal() {
         return;
       }
 
-      // Cálculo de código de horário (exemplo simples, adapte se tiver mapping)
-      const diaSemanaToCode = {
-        MONDAY: 1,
-        TUESDAY: 2,
-        WEDNESDAY: 3,
-        THURSDAY: 4,
-        FRIDAY: 5
-      };
-
       const horarioToCode = {
         TEMPO1: 1,
         TEMPO2: 2,
@@ -115,7 +104,6 @@ export default function CriarTurmaModal() {
         TEMPO6: 6
       };
 
-      // Monta payload da turma conforme backend exige
       const turmaPayload = {
         id: 0,
         professor: novaTurma.professor,
@@ -149,7 +137,6 @@ export default function CriarTurmaModal() {
       setNovaTurma({
         professor: "",
         disciplina: "",
-        diaSemana: "",
         horario: "",
         turmaGrandeAntiga: false,
         bloco: "",
@@ -218,8 +205,7 @@ export default function CriarTurmaModal() {
               </select>
             </div>
 
-            {/* Dia da Semana */}
-            <div className="flex flex-col ml-6">
+            {/* <div className="flex flex-col ml-6">
               <Label htmlFor="diaSemana" className="pb-2">
                 Dia da Semana:
               </Label>
@@ -237,7 +223,7 @@ export default function CriarTurmaModal() {
                 <option value="THURSDAY">Quinta-feira</option>
                 <option value="FRIDAY">Sexta-feira</option>
               </select>
-            </div>
+            </div> */}
 
             {/* Horário */}
             <div className="flex flex-col ml-6">

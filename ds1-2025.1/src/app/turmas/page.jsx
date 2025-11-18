@@ -77,7 +77,7 @@ export default function AlocarTurmaSala() {
       setDialogEncerrarPeriodo(false);
       // getTurmasData(); // Atualiza a tabela após encerramento
     } catch (error) {
-      console.log('Erro ao encerrar período letivo.', error);
+      console.error('Erro ao encerrar período letivo.', error);
     }
   };
 
@@ -118,11 +118,8 @@ export default function AlocarTurmaSala() {
     setLoading(true); // Ativa o estado de carregamento
 
     try {
-      console.log('Buscando turmas...');
       const response = await TurmaService.getAllTurmas();
-      console.log('Resposta do TurmaService.getAllTurmas():', response);
       const turmas = response.data || [];
-      console.log('Turmas recebidas:', turmas);
 
       const turmasComAlocacoes = await Promise.all(
         turmas.map(async (turma) => {
@@ -218,10 +215,8 @@ export default function AlocarTurmaSala() {
     TurmaService.createAlocacaoTurma(turma)
       .then((response) => {
         setDialogOpen(false);
-        console.log(response.data);
       })
       .catch((error) => {
-        console.log('Erro ao alocar turma.', error);
       })
   }
 
@@ -315,6 +310,7 @@ export default function AlocarTurmaSala() {
           diaSemana: diaSemanaMap[horario.diaSemana],
           tempo: tempoMap[horario.tempoAula],
         };
+
 
         await TurmaService.createAlocacaoTurma(payload);
       }
@@ -445,7 +441,6 @@ export default function AlocarTurmaSala() {
   //Função para abrir o diálogo de edição
   const handleEditPreferences = async (turma) => {
     try {
-      console.log('Editando preferências da turma:', turma);
       setSelectedDisciplina(turma);
       setDialogEditOpen(true);
     } catch (error) {
