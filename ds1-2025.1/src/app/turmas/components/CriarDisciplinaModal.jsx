@@ -41,13 +41,13 @@ export default function CriarDisciplinaModal() {
       }
 
       await DisciplinaService.createDisciplina(disciplinaPayload);
+      await DisciplinaService.getAllDisciplinas();
 
       alert("Disciplina criada com sucesso!");
 
-      // Fecha o modal
+      // Fecha o modal e limpa o formulário
       setOpen(false);
 
-      // Limpa o formulário
       setNovaDisciplina({
         nome: "",
         disciplinaId: 0,

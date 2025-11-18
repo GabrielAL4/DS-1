@@ -84,7 +84,7 @@ export default function CadastrarSala() {
       const response = await SalaService.createSala(payload);
       console.log("Resposta do servidor:", response);
       setTabela((prevTable) => [...prevTable, response.data]);
-      
+
       // Limpar os campos após salvar
       setBloco("");
       setNumero("");
@@ -92,7 +92,7 @@ export default function CadastrarSala() {
       setLab(false);
       setAr(false);
       setLousa(false);
-      
+
       alert("Sala criada com sucesso!");
     } catch (error) {
       console.error("Erro ao criar sala:", error);
@@ -122,7 +122,7 @@ export default function CadastrarSala() {
     // Mapeamento dos valores numéricos para os enums do Java
     const diaSemanaMapping = {
       1: 'MONDAY',
-      2: 'TUESDAY', 
+      2: 'TUESDAY',
       3: 'WEDNESDAY',
       4: 'THURSDAY',
       5: 'FRIDAY'
@@ -130,7 +130,7 @@ export default function CadastrarSala() {
 
     const tempoMapping = {
       1: 'TEMPO1',
-      2: 'TEMPO2', 
+      2: 'TEMPO2',
       3: 'TEMPO3'
     };
 
@@ -233,10 +233,10 @@ export default function CadastrarSala() {
   const organizeIndisponibilidades = () => {
     console.log("Organizando indisponibilidades:", indisponibilidades);
     const tabela = Array(3).fill(null).map(() => Array(5).fill(null)); // 3 horários, 5 dias
-    
+
     indisponibilidades.forEach((indisponibilidade) => {
       console.log("Processando indisponibilidade:", indisponibilidade);
-      
+
       // Mapear DayOfWeek para índice (1-5)
       let diaSemanaIndex;
       switch (indisponibilidade.diaSemana) {
@@ -247,7 +247,7 @@ export default function CadastrarSala() {
         case 'FRIDAY': diaSemanaIndex = 4; break;
         default: console.warn("Dia da semana não reconhecido:", indisponibilidade.diaSemana); return;
       }
-      
+
       // Mapear TempoSala para índice (0-2)
       let tempoIndex;
       switch (indisponibilidade.tempo) {
@@ -256,11 +256,11 @@ export default function CadastrarSala() {
         case 'TEMPO3': tempoIndex = 2; break;
         default: console.warn("Tempo não reconhecido:", indisponibilidade.tempo); return;
       }
-      
+
       console.log(`Marcando posição [${tempoIndex}][${diaSemanaIndex}]`);
       tabela[tempoIndex][diaSemanaIndex] = "X"; // Marca o horário indisponível
     });
-    
+
     // console.log("Tabela organizada:", tabela);
     return tabela;
   };

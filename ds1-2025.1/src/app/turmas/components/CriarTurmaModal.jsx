@@ -51,9 +51,11 @@ export default function CriarTurmaModal() {
   };
 
   useEffect(() => {
-    getSalasData();
-    getDisciplinasData();
-  }, []);
+    if (open) {
+      getSalasData();
+      getDisciplinasData();
+    }
+  }, [open]);
 
   const handleNovaTurmaChange = (field, value) => {
     setNovaTurma(prev => ({
@@ -134,6 +136,7 @@ export default function CriarTurmaModal() {
 
       // Fecha modal e limpa campos
       setOpen(false);
+
       setNovaTurma({
         professor: "",
         disciplina: "",
@@ -153,7 +156,6 @@ export default function CriarTurmaModal() {
       <DialogTrigger asChild>
         <Button
           className="rounded-md bg-green-600 text-white p-2 min-w-[200px] h-[60px] flex items-center justify-center gap-2"
-          onClick={() => setOpen(true)}
         >
           <Plus size={20} />
           Criar Turma
@@ -204,26 +206,6 @@ export default function CriarTurmaModal() {
                 ))}
               </select>
             </div>
-
-            {/* <div className="flex flex-col ml-6">
-              <Label htmlFor="diaSemana" className="pb-2">
-                Dia da Semana:
-              </Label>
-              <select
-                id="diaSemana"
-                className="rounded-md border p-2"
-                value={novaTurma.diaSemana}
-                onChange={(e) => handleNovaTurmaChange("diaSemana", e.target.value)}
-                required
-              >
-                <option value="">Selecione o dia</option>
-                <option value="MONDAY">Segunda-feira</option>
-                <option value="TUESDAY">Terça-feira</option>
-                <option value="WEDNESDAY">Quarta-feira</option>
-                <option value="THURSDAY">Quinta-feira</option>
-                <option value="FRIDAY">Sexta-feira</option>
-              </select>
-            </div> */}
 
             {/* Horário */}
             <div className="flex flex-col ml-6">
@@ -309,6 +291,7 @@ export default function CriarTurmaModal() {
                 Cancelar
               </Button>
             </DialogClose>
+
             <Button type="submit">Criar Turma</Button>
           </DialogFooter>
         </form>

@@ -297,10 +297,14 @@ export default function AlocarTurmaSala() {
         4: "THURSDAY",
         5: "FRIDAY"
       };
+
       const tempoMap = {
         1: "TEMPO1",
         2: "TEMPO2",
-        3: "TEMPO3"
+        3: "TEMPO3",
+        4: "TEMPO4",
+        3: "TEMPO5",
+        4: "TEMPO6",
       };
 
       for (const horario of horarios) {
@@ -310,7 +314,6 @@ export default function AlocarTurmaSala() {
           diaSemana: diaSemanaMap[horario.diaSemana],
           tempo: tempoMap[horario.tempoAula],
         };
-
 
         await TurmaService.createAlocacaoTurma(payload);
       }
