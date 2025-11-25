@@ -27,7 +27,7 @@ public class Turma {
     @Column(name="quantidade_alunos")
     private int quantidadeAlunos;
 
-    @Min(value = 1,message="Horário deve ser maior que 0")
+    @Min(value = 0,message="Horário deve ser maior ou igual a 0")
     @Max(value = 6,message="Horário deve ser menor ou igual a 6")
     @Column(name="codigo_horario")
     private int codigoHorario;
@@ -65,13 +65,13 @@ public class Turma {
         this.quantidadeAlunos = quantidadeAlunos;
     }
 
-    @Min(value = 1, message = "Horário deve ser maior que 0")
+    @Min(value = 0,message="Horário deve ser maior ou igual a 0")
     @Max(value = 6, message = "Horário deve ser menor ou igual a 6")
     public int getCodigoHorario() {
         return codigoHorario;
     }
 
-    public void setCodigoHorario(@Min(value = 1, message = "Horário deve ser maior que 0") @Max(value = 6, message = "Horário deve ser menor ou igual a 6") int codigoHorario) {
+    public void setCodigoHorario(@Min(value = 0,message="Horário deve ser maior ou igual a 0") @Max(value = 6, message = "Horário deve ser menor ou igual a 6") int codigoHorario) {
         this.codigoHorario = codigoHorario;
     }
 

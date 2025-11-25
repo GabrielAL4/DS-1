@@ -77,7 +77,7 @@ export default function AlocarTurmaSala() {
       setDialogEncerrarPeriodo(false);
       // getTurmasData(); // Atualiza a tabela após encerramento
     } catch (error) {
-      console.log('Erro ao encerrar período letivo.', error);
+      console.error('Erro ao encerrar período letivo.', error);
     }
   };
 
@@ -115,77 +115,32 @@ export default function AlocarTurmaSala() {
 
   // Função para carregar dados das turmas
   const getTurmasData = async () => {
-    setLoading(true); // Ativa o estado de carregamento
-
     try {
-      console.log('Buscando turmas...');
-      const response = await TurmaService.getAllTurmas();
-      console.log('Resposta do TurmaService.getAllTurmas():', response);
-      const turmas = response.data || [];
-      console.log('Turmas recebidas:', turmas);
+      // 1 - pega turmas
+      const turmasResponse = await TurmaService.getAll();
+      const turmas = turmasResponse.data;
 
-      const turmasComAlocacoes = await Promise.all(
-        turmas.map(async (turma) => {
-          try {
-            const alocacoesResponse = await TurmaService.getTurmaById(turma.id);
-            const alocacoes = alocacoesResponse.data.alocacoes || [];
-            const alocacaoAtual = alocacoes[0]; // Considera a primeira alocação, se existir
+      // 2 - pega todas as alocações
+      const alocacoesResponse = await TurmaService.getAllAlocacoes();
+      const alocacoes = alocacoesResponse.data;
 
-            return {
-              ...turma,
-              alocada: !!alocacaoAtual,
-              salaSelecionada: alocacaoAtual ? alocacaoAtual.salaId : null,
-            };
-          } catch (error) {
-            console.error(`Erro ao buscar alocações da turma ${turma.id}:`, error);
-            return {
-              ...turma,
-              alocada: false,
-              salaSelecionada: null,
-            };
-          }
-        })
-      );
+      // 3 - faz o match turma -> alocação
+      const turmasComStatus = turmas.map(turma => {
+        const alocacao = alocacoes.find(a => a.turma.id === turma.id);
 
-      const mapResponse = turmasComAlocacoes.map((turma) => {
-        try {
-          return {
-            id: turma.id || 0,
-            professor: turma.professor || "Não informado",
-            disciplina: turma.disciplina?.nome || turma.disciplina || "Sem Nome",
-            quantidadeAlunos: turma.quantidadeAlunos || 0,
-            codigoHorario: turma.codigoHorario || 0,
-            necessitaLaboratorio: turma.disciplina?.necessitaLaboratorio || false,
-            necessitaArCondicionado: turma.disciplina?.necessitaArCondicionado || false,
-            necessitaLoucaDigital: turma.disciplina?.necessitaLoucaDigital || false,
-            disciplinaId: turma.disciplina?.id || 0,
-            alocada: turma.alocada || false,
-            salaSelecionada: turma.salaSelecionada || null,
-          };
-        } catch (error) {
-          console.error('Erro ao mapear turma:', turma, error);
-          return {
-            id: 0,
-            professor: "Erro",
-            disciplina: "Erro",
-            quantidadeAlunos: 0,
-            codigoHorario: 0,
-            necessitaLaboratorio: false,
-            necessitaArCondicionado: false,
-            necessitaLoucaDigital: false,
-            disciplinaId: 0,
-            alocada: false,
-            salaSelecionada: null,
-          };
-        }
+        return {
+          ...turma,
+          alocada: !!alocacao,
+          salaSelecionada: alocacao ? alocacao.sala.id : null,
+          diaSemana: alocacao ? alocacao.diaSemana : null,
+          horarioSelecionado: alocacao ? alocacao.tempo : null
+        };
       });
 
-      setTabela(mapResponse); // Atualiza os dados da tabela
+      setTabela(turmasComStatus);
+
     } catch (error) {
       console.error("Erro ao carregar turmas:", error);
-      setTabela([]);
-    } finally {
-      setLoading(false); // Desativa o estado de carregamento
     }
   };
 
@@ -205,7 +160,10 @@ export default function AlocarTurmaSala() {
     const tempoMap = {
       1: "TEMPO1",
       2: "TEMPO2",
-      3: "TEMPO3"
+      3: "TEMPO3",
+      4: "TEMPO4",
+      5: "TEMPO5",
+      6: "TEMPO6",
     };
 
     const turma = {
@@ -218,10 +176,8 @@ export default function AlocarTurmaSala() {
     TurmaService.createAlocacaoTurma(turma)
       .then((response) => {
         setDialogOpen(false);
-        console.log(response.data);
       })
       .catch((error) => {
-        console.log('Erro ao alocar turma.', error);
       })
   }
 
@@ -245,7 +201,10 @@ export default function AlocarTurmaSala() {
       const tempoMap = {
         1: "TEMPO1",
         2: "TEMPO2",
-        3: "TEMPO3"
+        3: "TEMPO3",
+        4: "TEMPO4",
+        5: "TEMPO5",
+        6: "TEMPO6",
       };
 
       const salasDisponiveisPorHorario = await Promise.all(
@@ -302,10 +261,14 @@ export default function AlocarTurmaSala() {
         4: "THURSDAY",
         5: "FRIDAY"
       };
+
       const tempoMap = {
         1: "TEMPO1",
         2: "TEMPO2",
-        3: "TEMPO3"
+        3: "TEMPO3",
+        4: "TEMPO4",
+        3: "TEMPO5",
+        4: "TEMPO6",
       };
 
       for (const horario of horarios) {
@@ -317,6 +280,7 @@ export default function AlocarTurmaSala() {
         };
 
         await TurmaService.createAlocacaoTurma(payload);
+        await getTurmasData();
       }
 
       // Atualiza o estado local da tabela para refletir a mudança
@@ -445,7 +409,6 @@ export default function AlocarTurmaSala() {
   //Função para abrir o diálogo de edição
   const handleEditPreferences = async (turma) => {
     try {
-      console.log('Editando preferências da turma:', turma);
       setSelectedDisciplina(turma);
       setDialogEditOpen(true);
     } catch (error) {
@@ -657,8 +620,8 @@ export default function AlocarTurmaSala() {
                   <option value="2">2</option>
                   <option value="3">3</option>
                 </select>
-                <div className="flex items-center gap-2">
-                  <CriarTurmaModal />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <CriarTurmaModal setTabela={setTabela} />
 
                   <CriarDisciplinaModal />
 

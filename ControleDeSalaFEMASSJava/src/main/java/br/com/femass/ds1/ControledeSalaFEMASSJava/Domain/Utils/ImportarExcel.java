@@ -1,6 +1,7 @@
 package br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Utils;
 
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Disciplina;
+import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Enums.TempoSala;
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Turma;
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services.DisciplinaService;
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services.TurmaService;
@@ -10,7 +11,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ImportarExcel {
@@ -22,12 +26,34 @@ public class ImportarExcel {
     private TurmaService turmaService;
 
     public record DadosDisciplinaJson(
-            int codigoturma,
+            Integer codigoturma,
             String professor,
             String disciplina,
-            int quantidade,
-            int codigohorario
+            Integer quantidade,
+            Integer codigohorario
     ) {}
+
+    public record TurmaKey (
+            Integer codigohorario,
+            String professor
+    ){
+
+        // Must implement equals and hashCode for correct Map grouping
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TurmaKey turmaKey = (TurmaKey) o;
+            // Handles null codigohorario correctly
+            return java.util.Objects.equals(codigohorario, turmaKey.codigohorario) &&
+                    java.util.Objects.equals(professor, turmaKey.professor);
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(codigohorario, professor);
+        }
+    }
 
     /**
      * Recebe uma String JSON com os dados da tabela,
@@ -73,8 +99,10 @@ public class ImportarExcel {
                 .map(this::mapearParaTurma)
                 .toList();
 
+        List<Turma> turmasAgrupadas = agglutinateDisciplines(turmasParaSalvar);
+
         // 3. Salva as novas entidades Turma
-        for (Turma turma : turmasParaSalvar) {
+        for (Turma turma : turmasAgrupadas) {
             try {
                 // Chamada ao serviço para persistir o objeto
                 if (turmaService != null) {
@@ -108,8 +136,53 @@ public class ImportarExcel {
         turma.setDisciplina(disciplinaService.findDisciplinaByNome(dadosJson.disciplina));
         turma.setProfessor(dadosJson.professor);
         turma.setTurmaGrandeAntiga(false);
-        turma.setCodigoHorario(dadosJson.codigohorario);
+        turma.setCodigoHorario(dadosJson.codigohorario != null ? dadosJson.codigohorario : 0);
         turma.setQuantidadeAlunos(dadosJson.quantidade);
         return turma;
+    }
+
+    private List<Turma> agglutinateDisciplines(List<Turma> turmas) {
+        // 1. Group the Turmas by the composite key (codigohorario + professor)
+        // We filter out any record where the professor is null (unlikely, but safe)
+        Map<TurmaKey, List<Turma>> groupedByCompositeKey = turmas.stream()
+                .filter(t -> t.getProfessor() != null && t.getCodigoHorario() != 0)
+                .collect(Collectors.groupingBy(t -> new TurmaKey(t.getCodigoHorario(), t.getProfessor())));
+
+        // 2. Process each group to aggregate the data
+        List<Turma> aggregatedTurmas = groupedByCompositeKey.values().stream()
+                .map(group -> {
+                    // A. Find the Turma with the HIGHEST original 'quantidade'
+                    // This discipline name will be used for the final aggregated record.
+                    Turma maxTurma = group.stream()
+                            .max(Comparator.comparingInt(Turma::getQuantidadeAlunos))
+                            .orElse(group.get(0));
+
+                    // B. Calculate the TOTAL 'quantidade' for the entire group
+                    int totalQuantidade = group.stream()
+                            .mapToInt(Turma::getQuantidadeAlunos)
+                            .sum();
+
+                    // C. Create a NEW Turma record with the aggregated values
+                    Turma aggregated = new Turma();
+                    aggregated.setCodigoHorario(maxTurma.getCodigoHorario());
+                    aggregated.setProfessor(maxTurma.getProfessor());
+
+                    // Crucial step: Set the discipline from the 'maxTurma'
+                    aggregated.setDisciplina(maxTurma.getDisciplina());
+
+                    // Crucial step: Set the calculated total quantity
+                    aggregated.setQuantidadeAlunos(totalQuantidade);
+
+                    return aggregated;
+                })
+                .collect(Collectors.toList());
+
+        List<Turma> turmasSemCodigoHorario = turmas.stream()
+                .filter(t -> t.getProfessor() != null && t.getCodigoHorario() == 0)
+                .collect(Collectors.toList());
+
+        aggregatedTurmas.addAll(turmasSemCodigoHorario);
+
+        return aggregatedTurmas;
     }
 }
