@@ -7,6 +7,7 @@ export const siteRoutes = [
   { href: '/', label: 'Inicio' },
   { href: '/salas', label: 'Salas' },
   { href: '/turmas', label: 'Turmas' },
+  { href: '/disciplinas', label: 'Disciplinas' },
 ]
 
 export default function Header() {

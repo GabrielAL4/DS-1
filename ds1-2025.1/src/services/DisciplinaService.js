@@ -2,9 +2,7 @@ import { httpClient } from "./httpClient";
 
 export class DisciplinaService {
   static async createDisciplina(payload) {
-    console.log("DisciplinaService.createDisciplina - Payload:", payload);
     const response = httpClient.post('/Disciplina', payload);
-    console.log("DisciplinaService.createDisciplina - Response:", response);
 
     return response;
   }
