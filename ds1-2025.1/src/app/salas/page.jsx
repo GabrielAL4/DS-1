@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { IndisponibilidadeService } from "@/services/IndisponibilidadeService";
 import { SalaService } from "@/services/SalaService";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -40,7 +41,7 @@ export default function CadastrarSala() {
 
   const [selectedBloco, setSelectedBloco] = useState("");
   const [selectedSalaId, setSelectedSalaId] = useState(0);
-  const [selectedHorario, setSelectedHorario] = useState(0);
+  const [selectedHorario, setSelectedHorario] = useState("");
   const [isDialogEditOpen, setIsDialogEditOpen] = useState(false);
   const [isDialogDeleteOpen, setIsDialogDeleteOpen] = useState(false);
   const [editSala, setEditSala] = useState({
@@ -110,44 +111,30 @@ export default function CadastrarSala() {
     // Verificar se já existe uma indisponibilidade com o mesmo dia e horário
     const duplicada = indisponibilidades.some(
       (indisponibilidade) =>
-        indisponibilidade.diaSemana === parseInt(selectedDiaSemana) &&
-        indisponibilidade.tempo === parseInt(selectedHorario)
+        indisponibilidade.diaSemana === selectedDiaSemana &&
+        indisponibilidade.tempo === selectedHorario
     );
 
     if (duplicada) {
-      alert("Essa indisponibilidade já está registrada para a sala selecionada.");
+      alert("Essa indisponibilidade já está registrada para a sala selecionada");
       return;
     }
 
-    // Mapeamento dos valores numéricos para os enums do Java
-    const diaSemanaMapping = {
-      1: 'MONDAY',
-      2: 'TUESDAY',
-      3: 'WEDNESDAY',
-      4: 'THURSDAY',
-      5: 'FRIDAY'
-    };
-
-    const tempoMapping = {
-      1: 'TEMPO1',
-      2: 'TEMPO2',
-      3: 'TEMPO3'
-    };
-
     const indisponibilidade = {
-      diaSemana: parseInt(selectedDiaSemana),
-      tempo: parseInt(selectedHorario),
+      diaSemana: selectedDiaSemana,
+      tempo: selectedHorario,
     };
 
     SalaService.createIndisponibilidadeSala(selectedSalaId, indisponibilidade)
-      .then(() => alert("Indisponibilidade adicionada com sucesso."))
+      .then(async () => {
+        alert("Indisponibilidade adicionada com sucesso.");
+        // Atualiza as indisponibilidades buscando do banco
+        await fetchIndisponibilidades(selectedSalaId);
+      })
       .catch((error) => {
         alert("Erro ao adicionar indisponibilidade.");
         console.error("Erro ao adicionar indisponibilidade:", error);
       });
-
-    // Atualiza as indisponibilidades buscando do banco
-    await fetchIndisponibilidades(selectedSalaId);
   };
 
   const handleEditSala = (sala) => {
@@ -211,22 +198,18 @@ export default function CadastrarSala() {
   };
 
   //Função para Buscar Indisponibilidades
-  const fetchIndisponibilidades = async (salaId) => {
-    try {
-      const response = await fetch(`http://localhost:8080/Sala/${salaId}/com-indisponibilidades`);
-      if (!response.ok) {
-        throw new Error('Erro ao buscar indisponibilidades');
-      }
-      const data = await response.json();
-      console.log("Dados da sala com indisponibilidades:", data);
-
-      // Atualiza o estado com as indisponibilidades
-      setIndisponibilidades(data.indisponibilidades || []);
-      setIsIndisponibilidadeListOpen(true); // Abre o modal
-    } catch (error) {
-      console.error("Erro ao buscar os dados da sala:", error);
-      alert("Erro ao buscar indisponibilidades da sala");
-    }
+  const fetchIndisponibilidades = async () => {
+    IndisponibilidadeService.getAllIndisponibilidades()
+      .then((response) => {
+        console.log('chama indisponibilidades', response);
+        // Atualiza o estado com as indisponibilidades
+        setIndisponibilidades(response.data || []);
+        setIsIndisponibilidadeListOpen(true); // Abre o modal
+      })
+      .catch((error) => {
+        alert("Indisponibilidades não encontradas.");
+        console.error("Erro ao encontrar sala com indisponibilidade:", error);
+      });
   };
 
   //organiza as indisponibilidades em um formato que facilite a exibição
@@ -394,9 +377,9 @@ export default function CadastrarSala() {
             <div>
               <Dialog>
                 <DialogTrigger asChild>
-                  <button className="rounded-md bg-blue-600 text-white p-1.5 mr-2 w-[200px]">
+                  <Button className="rounded-md bg-blue-600 text-white p-1.5 mr-2 w-[200px]">
                     Indisponibilidade
-                  </button>
+                  </Button>
                 </DialogTrigger>
 
                 <DialogContent>
@@ -406,89 +389,92 @@ export default function CadastrarSala() {
                     </DialogTitle>
                   </DialogHeader>
 
-                  <div className="grid gap-4 py-4">
-                    <div className="flex flex-col ml-6">
-                      <Label htmlFor="bloco" className="pb-2">
-                        Bloco:
-                      </Label>
-                      <select
-                        className="rounded-md border p-2 col-span-3"
-                        value={selectedBloco}
-                        onChange={(e) => setSelectedBloco(e.target.value)}
-                      >
-                        <option value={null}>Selecione um bloco</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
-                      </select>
+                  <form onSubmit={handleSubmitUnavailable}>
+                    <div className="grid gap-4 py-4">
+                      <div className="flex flex-col ml-6">
+                        <Label htmlFor="bloco" className="pb-2">
+                          Bloco:
+                        </Label>
+                        <select
+                          className="rounded-md border p-2 col-span-3"
+                          value={selectedBloco}
+                          onChange={(e) => setSelectedBloco(e.target.value)}
+                        >
+                          <option value={null}>Selecione um bloco</option>
+                          <option value="A">A</option>
+                          <option value="B">B</option>
+                          <option value="C">C</option>
+                          <option value="D">D</option>
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col ml-6">
+                        <Label htmlFor="numero" className="pb-2">
+                          Numero:
+                        </Label>
+                        <select
+                          className="rounded-md border p-2 col-span-3"
+                          value={selectedSalaId}
+                          onChange={(e) => setSelectedSalaId(e.target.value)}
+                        >
+                          <option value={null}>Selecione o número da sala</option>
+                          {tabela
+                            .filter((row) => row.bloco === selectedBloco) // Filtra com base no bloco selecionado
+                            .map((row) => (
+                              <option key={row.id} value={row.id}>
+                                {row.numero}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+
+                      {/* Seleção do Dia da Semana */}
+                      <div className="flex flex-col ml-6">
+                        <Label htmlFor="diaSemana" className="pb-2">Dia da Semana:</Label>
+                        <select
+                          id="diaSemana"
+                          className="rounded-md border p-2 col-span-3"
+                          value={selectedDiaSemana}
+                          onChange={(e) => setSelectedDiaSemana(e.target.value)}
+                        >
+                          <option value="">Selecione um dia</option>
+                          <option value="MONDAY">Segunda-feira</option>
+                          <option value="TUESDAY">Terça-feira</option>
+                          <option value="WEDNESDAY">Quarta-feira</option>
+                          <option value="THURSDAY">Quinta-feira</option>
+                          <option value="FRIDAY">Sexta-feira</option>
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col ml-6">
+                        <Label htmlFor="horario" className="pb-2">
+                          Horario:
+                        </Label>
+
+                        <select
+                          id="horario"
+                          className="rounded-md border p-2 col-span-3"
+                          value={selectedHorario}
+                          onChange={(e) => setSelectedHorario(e.target.value)}
+                        >
+                          <option>Selecione um horário</option>
+                          <option value="TEMPO1">1</option>
+                          <option value="TEMPO2">2</option>
+                          <option value="TEMPO3">3</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <div className="flex flex-col ml-6">
-                      <Label htmlFor="numero" className="pb-2">
-                        Numero:
-                      </Label>
-                      <select
-                        className="rounded-md border p-2 col-span-3"
-                        value={selectedSalaId}
-                        onChange={(e) => setSelectedSalaId(e.target.value)}
-                      >
-                        <option value={null}>Selecione o número da sala</option>
-                        {tabela
-                          .filter((row) => row.bloco === selectedBloco) // Filtra com base no bloco selecionado
-                          .map((row) => (
-                            <option key={row.id} value={row.id}>
-                              {row.numero}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button type="button" variant="outline">
+                          Cancelar
+                        </Button>
+                      </DialogClose>
 
-                    {/* Seleção do Dia da Semana */}
-                    <div className="flex flex-col ml-6">
-                      <Label htmlFor="diaSemana" className="pb-2">Dia da Semana:</Label>
-                      <select
-                        id="diaSemana"
-                        className="rounded-md border p-2 col-span-3"
-                        value={selectedDiaSemana}
-                        onChange={(e) => setSelectedDiaSemana(e.target.value)}
-                      >
-                        <option value="">Selecione um dia</option>
-                        <option value="1">Segunda-feira</option>
-                        <option value="2">Terça-feira</option>
-                        <option value="3">Quarta-feira</option>
-                        <option value="4">Quinta-feira</option>
-                        <option value="5">Sexta-feira</option>
-                      </select>
-                    </div>
-
-                    <div className="flex flex-col ml-6">
-                      <Label htmlFor="horario" className="pb-2">
-                        Horario:
-                      </Label>
-
-                      <select
-                        id="horario"
-                        className="rounded-md border p-2 col-span-3"
-                        value={selectedHorario}
-                        onChange={(e) => setSelectedHorario(e.target.value)}
-                      >
-                        <option>Selecione um horário</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button type="button" variant="outline">
-                        Cancelar
-                      </Button>
-                    </DialogClose>
-                    <Button type="button" onClick={(e) => handleSubmitUnavailable(e)}>Sim</Button>
-                  </DialogFooter>
+                      <Button type="submit">Sim</Button>
+                    </DialogFooter>
+                  </form>
                 </DialogContent>
               </Dialog>
             </div>
@@ -657,8 +643,7 @@ export default function CadastrarSala() {
                     {linha.map((celula, j) => (
                       <td
                         key={j}
-                        className={`border border-gray-300 px-2 py-1 ${celula ? "bg-red-300" : "bg-green-300"
-                          }`}
+                        className={`border border-gray-300 px-2 py-1 ${celula ? "bg-red-300" : "bg-green-300"}`}
                       >
                         {celula || ""}
                       </td>

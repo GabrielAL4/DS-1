@@ -7,7 +7,7 @@ export class IndisponibilidadeService {
     return response;
   }
 
-  static async getAllIndiponibilidades() {
+  static async getAllIndisponibilidades() {
     const response = httpClient.get('/indisponibilidades');
 
     return response;
