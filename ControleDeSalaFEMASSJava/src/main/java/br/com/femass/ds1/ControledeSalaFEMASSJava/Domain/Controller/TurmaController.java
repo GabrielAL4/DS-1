@@ -72,8 +72,7 @@ public class TurmaController {
         Turma turma = turmaService.getTurmaById(payload.idTurma).orElseThrow();
         Sala sala = salaService.getSalaById(payload.idSala).orElseThrow();
 
-        AlocacaoSala alocacaoSala = new AlocacaoSala(sala, turma, payload.diaSemana, payload.tempo);
-        // ...
+        AlocacaoSala alocacaoSala = alocacaoSalaService.createAlocacao(new AlocacaoSala(sala, turma, payload.diaSemana, payload.tempo));
         return new ResponseEntity<>(alocacaoSala, HttpStatus.CREATED);
     }
 
