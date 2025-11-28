@@ -15,6 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import dynamic from "next/dynamic";
+const html2pdf = dynamic(() => import("html2pdf.js"), { ssr: false });
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +29,7 @@ import { useEffect, useState } from "react";
 import CriarDisciplinaModal from "./components/CriarDisciplinaModal";
 import CriarTurmaModal from "./components/CriarTurmaModal";
 import ImportarTurmasExcelModal from "./components/ImportarTurmasExcelModal";
+
 
 export default function AlocarTurmaSala() {
   const [tabela, setTabela] = useState([]);
@@ -313,20 +316,22 @@ export default function AlocarTurmaSala() {
     }
   };
 
+  const diasDaSemana = [
+    "Domingo", // 0
+    "Segunda-feira", // 1
+    "Terça-feira", // 2
+    "Quarta-feira", // 3
+    "Quinta-feira", // 4
+    "Sexta-feira", // 5
+    "Sábado", // 6
+  ];
+
   const handleAlocacoesTurma = async (id) => {
     try {
       const response = await TurmaService.getTurmaById(id);
       const alocacoes = response.data.alocacoes || [];
 
-      const diasDaSemana = [
-        "Domingo", // 0
-        "Segunda-feira", // 1
-        "Terça-feira", // 2
-        "Quarta-feira", // 3
-        "Quinta-feira", // 4
-        "Sexta-feira", // 5
-        "Sábado", // 6
-      ];
+
 
       const alocacoesComDetalhes = alocacoes.map((alocacao) => {
         const salaEncontrada = salas.find(
@@ -351,28 +356,6 @@ export default function AlocarTurmaSala() {
     }
   };
 
-  const handleGerarRelatorioFinal = async () => {
-    try {
-      const response = await SalaService.createRelatorioFinal(diaPDF);
-      // Criar um link temporário para fazer o download do arquivo
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-
-      // Definir o nome do arquivo a ser baixado
-      const contentDisposition = response.headers["content-disposition"];
-      const fileName = contentDisposition
-        ? contentDisposition.split("filename=")[1].replace(/"/g, "")
-        : "relatorio.pdf"; // Se não houver nome no cabeçalho, usa um nome padrão
-
-      link.download = fileName; // Define o nome do arquivo
-
-      // Simula o clique no link para iniciar o download
-      link.click();
-    } catch (error) {
-      console.error('Erro ao criar relatório.', error);
-    }
-  };
 
   //mapeamento que relaciona cada dia da semana aos códigos de horário
   const dayToCodeMapping = {
@@ -383,6 +366,14 @@ export default function AlocarTurmaSala() {
     5: [6, 5], // Sexta
   };
 
+  const HorarioDiaTurma = {
+    1: { 1: "18:00", 2: "20:40" },
+    2: { 2: "18:00", 1: "19:40", 3: "20:40" },
+    3: { 4: "18:00", 3: "20:40" },
+    4: { 5: "18:00", 4: "19:40", 6: "20:40" },
+    5: { 6: "18:00", 5: "19:40" },
+  }
+
   //lógica de filtragem para considerar esse mapeamento
   const filteredTable = Array.isArray(tabela) ? tabela.filter((row) => {
     // Lógica de filtragem de texto
@@ -391,6 +382,8 @@ export default function AlocarTurmaSala() {
         value !== null && value !== undefined &&
         value.toString().toLowerCase().includes(filterValue.toLowerCase())
     );
+
+
 
     // Lógica de filtragem com base no dia
     const matchesDay = filterDia
@@ -405,6 +398,95 @@ export default function AlocarTurmaSala() {
 
     return matchesText && matchesDay && matchesTime;
   }) : [];
+
+  const filtrarTabela = (dados, codigoFiltro, blocoFiltro) => {
+    return dados.filter((row) => {
+      const codigoMatch = codigoFiltro ? row.codigoHorario === codigoFiltro : true;
+      const blocoMatch = blocoFiltro ? row.bloco === blocoFiltro : true;
+      return codigoMatch && blocoMatch;
+    });
+  };
+
+  const gerarLinhasTabelaPDF = (dados, diaPDF) => {
+    return dados
+      .map((row) => {
+        const horario = HorarioDiaTurma[parseInt(diaPDF)][parseInt(row.codigoHorario)] || "";
+
+        return `
+        <tr>
+          <td style="border: 1px solid #000; padding: 5px;">${row.disciplina}</td>
+          <td style="border: 1px solid #000; padding: 5px;">${row.professor}</td>
+          <td style="border: 1px solid #000; padding: 5px;">${horario}</td>
+          <td style="border: 1px solid #000; padding: 5px;">aaaaa</td>
+        </tr>
+      `;
+      })
+      .join(""); // junta as linhas
+  };
+
+
+
+  const gerarPDF = async () => {
+    const alocacoesResponse = await TurmaService.getAllAlocacoes();
+    const alocacoes = alocacoesResponsea.data;
+   
+
+    const html2pdf = (await import("html2pdf.js")).default;
+
+    if (diaPDF == "") {
+      alert("Informe o dia para gerar o PDF!");
+      return;
+    }
+
+
+
+    const html = `
+  <div style="font-family: Arial, sans-serif; padding: 20px; width: 700px; margin: auto; border: 1px solid #000">
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+      <img src="/femasslogo.jpg" alt="FeMASS" style="height: 50px;">
+      <h2>Faculdade Professor Miguel Ângelo da Silva</h2>
+      <h3>Santos - FeMASS</h3>
+      <h3>${diasDaSemana[parseInt(diaPDF)]}</h3>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+      <thead>
+        <tr style="background-color: #ccc;">
+          <th style="border: 1px solid #000; padding: 5px; width: 35%; text-align:center;">DISCIPLINA</th>
+          <th style="border: 1px solid #000; padding: 5px; width: 35%; text-align:center;">PROFESSOR</th>
+          <th style="border: 1px solid #000; padding: 5px; width: 15%; text-align:center;">HORÁRIO</th>
+          <th style="border: 1px solid #000; padding: 5px; width: 15%; text-align:center;">SALA</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td colspan="4" style="background-color: #eee; font-weight: bold; text-align:center; padding:6px;">
+            BLOCO A
+          </td>
+        </tr>
+
+        ${gerarLinhasTabelaPDF(tabela, diaPDF)}
+      </tbody></table> `
+
+
+    const elemento = document.createElement("div");
+    elemento.innerHTML = html;
+
+    const options = {
+      margin: 10,
+      filename: "relatorio.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    };
+
+    const pdfBlobUrl = await html2pdf().set(options).from(elemento).outputPdf('bloburl');
+    window.open(pdfBlobUrl, "_blank");
+  };
+
+
 
   //Função para abrir o diálogo de edição
   const handleEditPreferences = async (turma) => {
@@ -907,7 +989,7 @@ export default function AlocarTurmaSala() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => handleGerarRelatorioFinal()}
+                      onClick={() => gerarPDF()}
                     >
                       Baixar PDF
                     </Button>
@@ -1093,7 +1175,7 @@ export default function AlocarTurmaSala() {
                       <TableBody>
                         {alocacoesSala.map((linha, index) => (
                           <TableRow key={index}>
-                            <TableCell>{`Horário ${index + 1}`}</TableCell>
+                            <TableCell>{`{Horário ${index + 1}`}</TableCell>
                             {linha.map((celula, i) => (
                               <TableCell
                                 key={i}
