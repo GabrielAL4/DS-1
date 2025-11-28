@@ -9,7 +9,6 @@ export class TurmaService {
 
   static async createAlocacaoTurma(payload) {
     const response = httpClient.post('/Turma/alocar-turma', payload);
-
     return response;
   }
 
@@ -46,6 +45,11 @@ export class TurmaService {
   static async deleteAlocacaoTurma(id) {
     const response = httpClient.delete(`/Turma/deletar-alocacao/${id}`);
 
+    return response;
+  }
+
+  static async getAllAlocacoes() {
+    const response = httpClient.get('/alocacoes');
     return response;
   }
 }

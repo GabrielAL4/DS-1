@@ -70,9 +70,7 @@ export default function CriarTurmaModal({ setTabela }) {
     if (
       !novaTurma.professor ||
       !novaTurma.disciplina ||
-      !novaTurma.horario ||
-      !novaTurma.bloco ||
-      !novaTurma.salaId
+      !novaTurma.horario
     ) {
       alert("Por favor, preencha todos os campos obrigatórios.");
       return;
@@ -88,14 +86,6 @@ export default function CriarTurmaModal({ setTabela }) {
         return;
       }
 
-      // Busca dados da sala
-      const salaSelecionada = salas.find(
-        s => s.id.toString() === novaTurma.salaId
-      );
-      if (!salaSelecionada) {
-        alert("Sala não encontrada.");
-        return;
-      }
 
       const horarioToCode = {
         TEMPO1: 1,
@@ -110,7 +100,7 @@ export default function CriarTurmaModal({ setTabela }) {
         id: 0,
         professor: novaTurma.professor,
         disciplina: disciplinaSelecionada,
-        quantidadeAlunos: salaSelecionada.capacidadeMaxima,
+        quantidadeAlunos: novaTurma.quantidadeAlunos,
         codigoHorario: horarioToCode[novaTurma.horario],
         turmaGrandeAntiga: novaTurma.turmaGrandeAntiga
       };
@@ -120,17 +110,9 @@ export default function CriarTurmaModal({ setTabela }) {
       const turmaResponse = await TurmaService.createTurma(turmaPayload);
       const turmaCriada = turmaResponse.data;
 
-      // Monta payload da alocação conforme backend exige
-      const alocacaoPayload = {
-        idTurma: turmaCriada.id,
-        idSala: salaSelecionada.id,
-        diaSemana: novaTurma.diaSemana,
-        tempo: novaTurma.horario
-      };
+  
 
-      console.log("Payload de alocação:", alocacaoPayload);
-
-      await TurmaService.createAlocacaoTurma(alocacaoPayload);
+      // await TurmaService.createAlocacaoTurma(alocacaoPayload);
 
       const response = await TurmaService.getAllTurmas();
       const turmas = response.data || [];
@@ -304,46 +286,21 @@ export default function CriarTurmaModal({ setTabela }) {
               </Label>
             </div>
 
-            {/* Bloco */}
+              {/* Quantidade de aluno */}
             <div className="flex flex-col ml-6">
-              <Label htmlFor="bloco" className="pb-2">
-                Bloco:
+              <Label htmlFor="quantidadeAlunos" className="pb-2">
+                Quantidade de aluno:
               </Label>
-              <select
-                id="bloco"
-                className="rounded-md border p-2"
-                value={novaTurma.bloco}
-                onChange={(e) => handleNovaTurmaChange("bloco", e.target.value)}
+              <Input
+                id="quantidadeAlunos"
+                type="text"
+                value={novaTurma.quantidadeAlunos}
+                onChange={(e) => handleNovaTurmaChange("quantidadeAlunos", e.target.value)}
                 required
-              >
-                <option value="">Selecione um bloco</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-              </select>
+              />
             </div>
 
-            {/* Sala */}
-            <div className="flex flex-col ml-6">
-              <Label htmlFor="salaId" className="pb-2">
-                Sala:
-              </Label>
-              <select
-                id="salaId"
-                className="rounded-md border p-2"
-                value={novaTurma.salaId}
-                onChange={(e) => handleNovaTurmaChange("salaId", e.target.value)}
-                required
-              >
-                <option value="">Selecione uma sala</option>
-                {salas.map((sala) => (
-                  <option key={sala.id} value={sala.id}>
-                    {sala.numero} (Capacidade: {sala.capacidadeMaxima})
-                  </option>
-                ))}
-              </select>
-            </div>
+       
           </div>
 
           <DialogFooter>
