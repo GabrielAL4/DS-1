@@ -184,6 +184,14 @@ export default function AlocarTurmaSala() {
       })
   }
 
+  const diaSemanaMap = {
+    1: "MONDAY",
+    2: "TUESDAY",
+    3: "WEDNESDAY",
+    4: "THURSDAY",
+    5: "FRIDAY"
+  };
+
   //Busca salas disponíveis para determinada disciplina
   const handleBuscarSalasDisponiveis = async (turma) => {
     try {
@@ -194,13 +202,7 @@ export default function AlocarTurmaSala() {
       }
 
       // Mapas para enums do Java
-      const diaSemanaMap = {
-        1: "MONDAY",
-        2: "TUESDAY",
-        3: "WEDNESDAY",
-        4: "THURSDAY",
-        5: "FRIDAY"
-      };
+
       const tempoMap = {
         1: "TEMPO1",
         2: "TEMPO2",
@@ -399,37 +401,78 @@ export default function AlocarTurmaSala() {
     return matchesText && matchesDay && matchesTime;
   }) : [];
 
-  const filtrarTabela = (dados, codigoFiltro, blocoFiltro) => {
-    return dados.filter((row) => {
-      const codigoMatch = codigoFiltro ? row.codigoHorario === codigoFiltro : true;
-      const blocoMatch = blocoFiltro ? row.bloco === blocoFiltro : true;
-      return codigoMatch && blocoMatch;
-    });
-  };
 
   const gerarLinhasTabelaPDF = (dados, diaPDF) => {
-    return dados
-      .map((row) => {
-        const horario = HorarioDiaTurma[parseInt(diaPDF)][parseInt(row.codigoHorario)] || "";
 
-        return `
-        <tr>
-          <td style="border: 1px solid #000; padding: 5px;">${row.disciplina}</td>
-          <td style="border: 1px solid #000; padding: 5px;">${row.professor}</td>
-          <td style="border: 1px solid #000; padding: 5px;">${horario}</td>
-          <td style="border: 1px solid #000; padding: 5px;">aaaaa</td>
-        </tr>
-      `;
-      })
-      .join(""); // junta as linhas
+
+    const diaFiltrado = diaSemanaMap[diaPDF];
+
+    // Filtrar dados somente pelo dia solicitado
+    const dadosFiltrados = dados.filter(item => item.diaSemana === diaFiltrado);
+
+    // 1. Agrupar por bloco
+    const porBloco = dadosFiltrados.reduce((acc, item) => {
+      const bloco = item.sala.bloco;
+      if (!acc[bloco]) acc[bloco] = [];
+      acc[bloco].push(item);
+      return acc;
+    }, {});
+
+    let htmlFinal = "";
+
+    // 2. Para cada bloco, organizar por horário
+    for (const bloco of Object.keys(porBloco).sort()) {
+      const dadosBloco = porBloco[bloco];
+
+      // Agrupar por códigoHorario
+      const porHorario = dadosBloco.reduce((acc, item) => {
+        const horario = item.turma.codigoHorario;
+        if (!acc[horario]) acc[horario] = [];
+        acc[horario].push(item);
+        return acc;
+      }, {});
+
+      // CABEÇALHO DO BLOCO
+      htmlFinal += `
+      <tr>
+        <td colspan="4" style="background-color: #eee; font-weight: bold; text-align:center; padding:6px;">
+          BLOCO ${bloco}
+        </td>
+      </tr>
+    `;
+
+      // Ordenar horários numericamente
+      const horariosOrdenados = Object.keys(porHorario).sort((a, b) => parseInt(a) - parseInt(b));
+
+      // 3. Criar seções por horário
+      horariosOrdenados.forEach((horarioCodigo) => {
+        const itensHorario = porHorario[horarioCodigo];
+
+        const horarioNome = HorarioDiaTurma?.[parseInt(diaPDF)]?.[parseInt(horarioCodigo)] || "";
+
+        // Linhas da turma
+        itensHorario.forEach((item) => {
+          htmlFinal += `
+          <tr>
+            <td style="font-size: 15px;border: 1px solid #000; padding: 4px;">${item.turma.disciplina.nome}</td>
+            <td style="font-size: 15px;border: 1px solid #000; padding: 4px;">${item.turma.professor}</td>
+            <td style="font-size: 15px;border: 1px solid #000; padding: 4px; text-align:center">${horarioNome}</td>
+            <td style="font-size: 15px;border: 1px solid #000; padding: 4px;text-align:center">${item.sala.numero}</td>
+          </tr>
+        `;
+        });
+      });
+    }
+
+    return htmlFinal;
   };
 
 
 
   const gerarPDF = async () => {
-    const alocacoesResponse = await TurmaService.getAllAlocacoes();
-    const alocacoes = alocacoesResponsea.data;
-   
+    alocacoesResponseAPI = await TurmaService.getAllAlocacoes();
+    alocacoes_data = alocacoesResponsea.data;
+    
 
     const html2pdf = (await import("html2pdf.js")).default;
 
@@ -461,13 +504,8 @@ export default function AlocarTurmaSala() {
       </thead>
 
       <tbody>
-        <tr>
-          <td colspan="4" style="background-color: #eee; font-weight: bold; text-align:center; padding:6px;">
-            BLOCO A
-          </td>
-        </tr>
 
-        ${gerarLinhasTabelaPDF(tabela, diaPDF)}
+        ${gerarLinhasTabelaPDF(alocacoes_data, diaPDF)}
       </tbody></table> `
 
 
