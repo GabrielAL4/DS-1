@@ -48,4 +48,9 @@ export class TurmaService {
 
     return response;
   }
+
+  static async importarExcelTurma(payload) {
+    const response = httpClient.post(`/Turma/importarExcel`, payload);
+    return response;
+  }
 }

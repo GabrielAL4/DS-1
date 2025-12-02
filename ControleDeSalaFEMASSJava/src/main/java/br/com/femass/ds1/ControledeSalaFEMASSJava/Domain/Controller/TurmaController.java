@@ -44,8 +44,7 @@ public class TurmaController {
             int idTurma,
             int idSala,
             DayOfWeek diaSemana,
-            TempoSala tempo
-    ) {
+            TempoSala tempo) {
     }
 
     @GetMapping
@@ -72,7 +71,8 @@ public class TurmaController {
         Turma turma = turmaService.getTurmaById(payload.idTurma).orElseThrow();
         Sala sala = salaService.getSalaById(payload.idSala).orElseThrow();
 
-        AlocacaoSala alocacaoSala = alocacaoSalaService.createAlocacao(new AlocacaoSala(sala, turma, payload.diaSemana, payload.tempo));
+        AlocacaoSala alocacaoSala = alocacaoSalaService
+                .createAlocacao(new AlocacaoSala(sala, turma, payload.diaSemana, payload.tempo));
         return new ResponseEntity<>(alocacaoSala, HttpStatus.CREATED);
     }
 
@@ -106,7 +106,7 @@ public class TurmaController {
 
     @PostMapping("/importarExcel")
     public ResponseEntity<Void> importarExcel(@RequestBody String jsonFile) {
-        int response =  importarExcel.importarDadosJson(jsonFile);
+        int response = importarExcel.importarDadosJson(jsonFile);
         if (response > 0)
             return new ResponseEntity<>(HttpStatus.OK);
         return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
