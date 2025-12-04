@@ -468,7 +468,7 @@ export default function AlocarTurmaSala() {
   };
 
 
-
+  //comentando para subir 
   const gerarPDF = async () => {
     alocacoesResponseAPI = await TurmaService.getAllAlocacoes();
     alocacoes_data = alocacoesResponsea.data;
