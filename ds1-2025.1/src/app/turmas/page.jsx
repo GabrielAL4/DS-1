@@ -15,6 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import dynamic from "next/dynamic";
+const html2pdf = dynamic(() => import("html2pdf.js"), { ssr: false });
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +29,7 @@ import { useEffect, useState } from "react";
 import CriarDisciplinaModal from "./components/CriarDisciplinaModal";
 import CriarTurmaModal from "./components/CriarTurmaModal";
 import ImportarTurmasExcelModal from "./components/ImportarTurmasExcelModal";
+
 
 export default function AlocarTurmaSala() {
   const [tabela, setTabela] = useState([]);
@@ -86,30 +89,28 @@ export default function AlocarTurmaSala() {
   // Mapeamento de horários compartilhado
   const horarioMapping = {
     1: [
-      { diaSemana: 1, tempoAula: 1 },
-      // { diaSemana: 1, tempoAula: 2 },
-      { diaSemana: 2, tempoAula: 2 },
+      { diaSemana: 1, tempoAula: "TEMPO1" },
+      { diaSemana: 2, tempoAula: "TEMPO2" },
     ],
     2: [
-      { diaSemana: 1, tempoAula: 2 }, //mudar tempo de aula de 2 para 3 quando ajeitado o banco
-      { diaSemana: 2, tempoAula: 1 },
+      { diaSemana: 1, tempoAula:"TEMPO2" }, 
+      { diaSemana: 2, tempoAula:"TEMPO1" },
     ],
     3: [
-      { diaSemana: 2, tempoAula: 3 },
-      { diaSemana: 3, tempoAula: 3 },
+      { diaSemana: 2, tempoAula:"TEMPO3" },
+      { diaSemana: 3, tempoAula:"TEMPO3"},
     ],
     4: [
-      { diaSemana: 3, tempoAula: 1 },
-      //{ diaSemana: 3, tempoAula: 2 },
-      { diaSemana: 4, tempoAula: 2 },
+      { diaSemana: 3, tempoAula:"TEMPO1" },
+      { diaSemana: 4, tempoAula:"TEMPO3"},
     ],
     5: [
-      { diaSemana: 4, tempoAula: 1 },
-      { diaSemana: 5, tempoAula: 2 },
+      { diaSemana: 4, tempoAula:"TEMPO1" },
+      { diaSemana: 5, tempoAula:"TEMPO2" },
     ],
     6: [
-      { diaSemana: 4, tempoAula: 3 },
-      { diaSemana: 5, tempoAula: 1 },
+      { diaSemana: 4, tempoAula: "TEMPO3"},
+      { diaSemana: 5, tempoAula: "TEMPO1"},
     ],
   };
 
@@ -181,6 +182,14 @@ export default function AlocarTurmaSala() {
       })
   }
 
+  const diaSemanaMap = {
+    1: "MONDAY",
+    2: "TUESDAY",
+    3: "WEDNESDAY",
+    4: "THURSDAY",
+    5: "FRIDAY"
+  };
+
   //Busca salas disponíveis para determinada disciplina
   const handleBuscarSalasDisponiveis = async (turma) => {
     try {
@@ -191,13 +200,7 @@ export default function AlocarTurmaSala() {
       }
 
       // Mapas para enums do Java
-      const diaSemanaMap = {
-        1: "MONDAY",
-        2: "TUESDAY",
-        3: "WEDNESDAY",
-        4: "THURSDAY",
-        5: "FRIDAY"
-      };
+
       const tempoMap = {
         1: "TEMPO1",
         2: "TEMPO2",
@@ -211,7 +214,7 @@ export default function AlocarTurmaSala() {
         horarios.map(async (horario) => {
           const response = await SalaService.getAllSalasDisponiveis(
             diaSemanaMap[horario.diaSemana],
-            tempoMap[horario.tempoAula]
+            horario.tempoAula //tempoMap[horario.tempoAula]
           );
           return response.data || [];
         })
@@ -276,7 +279,7 @@ export default function AlocarTurmaSala() {
           idTurma: turma.id,
           idSala: selectedSala.id,
           diaSemana: diaSemanaMap[horario.diaSemana],
-          tempo: tempoMap[horario.tempoAula],
+          tempo: horario.tempoAula//tempoMap[horario.tempoAula],
         };
 
         await TurmaService.createAlocacaoTurma(payload);
@@ -313,20 +316,22 @@ export default function AlocarTurmaSala() {
     }
   };
 
+  const diasDaSemana = [
+    "Domingo", // 0
+    "Segunda-feira", // 1
+    "Terça-feira", // 2
+    "Quarta-feira", // 3
+    "Quinta-feira", // 4
+    "Sexta-feira", // 5
+    "Sábado", // 6
+  ];
+
   const handleAlocacoesTurma = async (id) => {
     try {
       const response = await TurmaService.getTurmaById(id);
       const alocacoes = response.data.alocacoes || [];
 
-      const diasDaSemana = [
-        "Domingo", // 0
-        "Segunda-feira", // 1
-        "Terça-feira", // 2
-        "Quarta-feira", // 3
-        "Quinta-feira", // 4
-        "Sexta-feira", // 5
-        "Sábado", // 6
-      ];
+
 
       const alocacoesComDetalhes = alocacoes.map((alocacao) => {
         const salaEncontrada = salas.find(
@@ -351,28 +356,6 @@ export default function AlocarTurmaSala() {
     }
   };
 
-  const handleGerarRelatorioFinal = async () => {
-    try {
-      const response = await SalaService.createRelatorioFinal(diaPDF);
-      // Criar um link temporário para fazer o download do arquivo
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-
-      // Definir o nome do arquivo a ser baixado
-      const contentDisposition = response.headers["content-disposition"];
-      const fileName = contentDisposition
-        ? contentDisposition.split("filename=")[1].replace(/"/g, "")
-        : "relatorio.pdf"; // Se não houver nome no cabeçalho, usa um nome padrão
-
-      link.download = fileName; // Define o nome do arquivo
-
-      // Simula o clique no link para iniciar o download
-      link.click();
-    } catch (error) {
-      console.error('Erro ao criar relatório.', error);
-    }
-  };
 
   //mapeamento que relaciona cada dia da semana aos códigos de horário
   const dayToCodeMapping = {
@@ -383,6 +366,14 @@ export default function AlocarTurmaSala() {
     5: [6, 5], // Sexta
   };
 
+  const HorarioDiaTurma = {
+    1: { 1: "18:00", 2: "20:40" },
+    2: { 2: "18:00", 1: "19:40", 3: "20:40" },
+    3: { 4: "18:00", 3: "20:40" },
+    4: { 5: "18:00", 4: "19:40", 6: "20:40" },
+    5: { 6: "18:00", 5: "19:40" },
+  }
+
   //lógica de filtragem para considerar esse mapeamento
   const filteredTable = Array.isArray(tabela) ? tabela.filter((row) => {
     // Lógica de filtragem de texto
@@ -391,6 +382,8 @@ export default function AlocarTurmaSala() {
         value !== null && value !== undefined &&
         value.toString().toLowerCase().includes(filterValue.toLowerCase())
     );
+
+
 
     // Lógica de filtragem com base no dia
     const matchesDay = filterDia
@@ -405,6 +398,131 @@ export default function AlocarTurmaSala() {
 
     return matchesText && matchesDay && matchesTime;
   }) : [];
+
+
+  const gerarLinhasTabelaPDF = (dados, diaPDF) => {
+
+
+    const diaFiltrado = diaSemanaMap[diaPDF];
+
+    // Filtrar dados somente pelo dia solicitado
+    const dadosFiltrados = dados.filter(item => item.diaSemana === diaFiltrado);
+
+    // 1. Agrupar por bloco
+    const porBloco = dadosFiltrados.reduce((acc, item) => {
+      const bloco = item.sala.bloco;
+      if (!acc[bloco]) acc[bloco] = [];
+      acc[bloco].push(item);
+      return acc;
+    }, {});
+
+    let htmlFinal = "";
+
+    // 2. Para cada bloco, organizar por horário
+    for (const bloco of Object.keys(porBloco).sort()) {
+      const dadosBloco = porBloco[bloco];
+
+      // Agrupar por códigoHorario
+      const porHorario = dadosBloco.reduce((acc, item) => {
+        const horario = item.turma.codigoHorario;
+        if (!acc[horario]) acc[horario] = [];
+        acc[horario].push(item);
+        return acc;
+      }, {});
+
+      // CABEÇALHO DO BLOCO
+      htmlFinal += `
+      <tr>
+        <td colspan="4" style="background-color: #eee; font-weight: bold; text-align:center; padding:6px;">
+          BLOCO ${bloco}
+        </td>
+      </tr>
+    `;
+
+      // Ordenar horários numericamente
+      const horariosOrdenados = Object.keys(porHorario).sort((a, b) => parseInt(a) - parseInt(b));
+
+      // 3. Criar seções por horário
+      horariosOrdenados.forEach((horarioCodigo) => {
+        const itensHorario = porHorario[horarioCodigo];
+
+        const horarioNome = HorarioDiaTurma?.[parseInt(diaPDF)]?.[parseInt(horarioCodigo)] || "";
+
+        // Linhas da turma
+        itensHorario.forEach((item) => {
+          htmlFinal += `
+          <tr>
+            <td style="font-size: 15px;border: 1px solid #000; padding: 4px;">${item.turma.disciplina.nome}</td>
+            <td style="font-size: 15px;border: 1px solid #000; padding: 4px;">${item.turma.professor}</td>
+            <td style="font-size: 15px;border: 1px solid #000; padding: 4px; text-align:center">${horarioNome}</td>
+            <td style="font-size: 15px;border: 1px solid #000; padding: 4px;text-align:center">${item.sala.numero}</td>
+          </tr>
+        `;
+        });
+      });
+    }
+
+    return htmlFinal;
+  };
+
+
+  //comentando para subir 
+  const gerarPDF = async () => {
+    const alocacoesResponseAPI = await TurmaService.getAllAlocacoes();
+    const alocacoes_data = alocacoesResponseAPI.data;
+  
+
+    const html2pdf = (await import("html2pdf.js")).default;
+
+    if (diaPDF == "") {
+      alert("Informe o dia para gerar o PDF!");
+      return;
+    }
+
+
+
+    const html = `
+  <div style="font-family: Arial, sans-serif; padding: 20px; width: 700px; margin: auto; border: 1px solid #000">
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+      <img src="/femasslogo.jpg" alt="FeMASS" style="height: 50px;">
+      <h2>Faculdade Professor Miguel Ângelo da Silva</h2>
+      <h3>Santos - FeMASS</h3>
+      <h3>${diasDaSemana[parseInt(diaPDF)]}</h3>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+      <thead>
+        <tr style="background-color: #ccc;">
+          <th style="border: 1px solid #000; padding: 5px; width: 35%; text-align:center;">DISCIPLINA</th>
+          <th style="border: 1px solid #000; padding: 5px; width: 35%; text-align:center;">PROFESSOR</th>
+          <th style="border: 1px solid #000; padding: 5px; width: 15%; text-align:center;">HORÁRIO</th>
+          <th style="border: 1px solid #000; padding: 5px; width: 15%; text-align:center;">SALA</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        ${gerarLinhasTabelaPDF(alocacoes_data, diaPDF)}
+      </tbody></table> `
+
+
+    const elemento = document.createElement("div");
+    elemento.innerHTML = html;
+
+    const options = {
+      margin: 10,
+      filename: "relatorio.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    };
+
+    const pdfBlobUrl = await html2pdf().set(options).from(elemento).outputPdf('bloburl');
+    window.open(pdfBlobUrl, "_blank");
+  };
+
+
 
   //Função para abrir o diálogo de edição
   const handleEditPreferences = async (turma) => {
@@ -907,7 +1025,7 @@ export default function AlocarTurmaSala() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => handleGerarRelatorioFinal()}
+                      onClick={() => gerarPDF()}
                     >
                       Baixar PDF
                     </Button>
@@ -1093,7 +1211,7 @@ export default function AlocarTurmaSala() {
                       <TableBody>
                         {alocacoesSala.map((linha, index) => (
                           <TableRow key={index}>
-                            <TableCell>{`Horário ${index + 1}`}</TableCell>
+                            <TableCell>{`{Horário ${index + 1}`}</TableCell>
                             {linha.map((celula, i) => (
                               <TableCell
                                 key={i}

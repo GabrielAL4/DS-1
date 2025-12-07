@@ -9,7 +9,6 @@ export class TurmaService {
 
   static async createAlocacaoTurma(payload) {
     const response = httpClient.post('/Turma/alocar-turma', payload);
-
     return response;
   }
 
@@ -49,6 +48,8 @@ export class TurmaService {
     return response;
   }
 
+  static async getAllAlocacoes() {
+    const response = httpClient.get('/alocacoes');
   static async importarExcelTurma(payload) {
     const response = httpClient.post(`/Turma/importarExcel`, payload);
     return response;
