@@ -50,6 +50,8 @@ export class TurmaService {
 
   static async getAllAlocacoes() {
     const response = httpClient.get('/alocacoes');
+  static async importarExcelTurma(payload) {
+    const response = httpClient.post(`/Turma/importarExcel`, payload);
     return response;
   }
 }

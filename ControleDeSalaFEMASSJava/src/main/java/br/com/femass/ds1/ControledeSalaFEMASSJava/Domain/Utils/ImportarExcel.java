@@ -30,19 +30,20 @@ public class ImportarExcel {
             String professor,
             String disciplina,
             Integer quantidade,
-            Integer codigohorario
-    ) {}
+            Integer codigohorario) {
+    }
 
-    public record TurmaKey (
+    public record TurmaKey(
             Integer codigohorario,
-            String professor
-    ){
+            String professor) {
 
         // Must implement equals and hashCode for correct Map grouping
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             TurmaKey turmaKey = (TurmaKey) o;
             // Handles null codigohorario correctly
             return java.util.Objects.equals(codigohorario, turmaKey.codigohorario) &&
@@ -62,14 +63,16 @@ public class ImportarExcel {
      * @param jsonString A string JSON contendo a lista de disciplinas.
      * @return O número de disciplinas salvas com sucesso.
      */
-    // 2. O método NÃO deve ser estático para acessar o campo não-estático 'disciplinaService'.
+    // 2. O método NÃO deve ser estático para acessar o campo não-estático
+    // 'disciplinaService'.
     public int importarDadosJson(String jsonString) {
         ObjectMapper objectMapper = new ObjectMapper();
         List<DadosDisciplinaJson> dadosJson;
 
         try {
             // 1. Deserializa o JSON
-            dadosJson = objectMapper.readValue(jsonString, new TypeReference<List<DadosDisciplinaJson>>() {});
+            dadosJson = objectMapper.readValue(jsonString, new TypeReference<List<DadosDisciplinaJson>>() {
+            });
         } catch (JsonProcessingException e) {
             System.err.println("Erro ao processar JSON: " + e.getMessage());
             return 0;
@@ -89,7 +92,8 @@ public class ImportarExcel {
                     disciplinaService.createDisciplina(disciplina);
                 }
             } catch (Exception e) {
-                System.err.println("Erro ao salvar a disciplina: " + disciplina.getNome() + ". Erro: " + e.getMessage());
+                System.err
+                        .println("Erro ao salvar a disciplina: " + disciplina.getNome() + ". Erro: " + e.getMessage());
             }
         }
 
@@ -118,6 +122,7 @@ public class ImportarExcel {
 
     /**
      * Mapeia um objeto DadosDisciplinaJson para a entidade Disciplina.
+     * 
      * @param dadosJson O objeto com os dados do JSON.
      * @return A entidade Disciplina criada.
      */
@@ -133,7 +138,7 @@ public class ImportarExcel {
 
     private Turma mapearParaTurma(DadosDisciplinaJson dadosJson) {
         Turma turma = new Turma();
-        turma.setDisciplina(disciplinaService.findDisciplinaByNome(dadosJson.disciplina));
+        turma.setDisciplina(disciplinaService.findDisciplinasByNome(dadosJson.disciplina));
         turma.setProfessor(dadosJson.professor);
         turma.setTurmaGrandeAntiga(false);
         turma.setCodigoHorario(dadosJson.codigohorario != null ? dadosJson.codigohorario : 0);

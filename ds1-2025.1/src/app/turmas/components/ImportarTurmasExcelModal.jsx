@@ -1,11 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { TurmaService } from "@/services/TurmaService";
 import { useState } from "react";
+import * as XLSX from 'xlsx';
 
 export default function ImportarTurmasExcelModal() {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [excelTurma, setExcelTurma] = useState("");
+  const [dialogImportarExcel, setDialogImportarExcel] = useState(false);
 
-  // Função para abrir o modal de upload
   const handleFileUpload = (e) => {
     setSelectedFile(e.target.files[0]);
 
@@ -17,9 +20,19 @@ export default function ImportarTurmasExcelModal() {
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const parsedData = XLSX.utils.sheet_to_json(sheet);
-      console.log("Dados do Excel:", parsedData);
+
+      const mappedExcelTurma = parsedData
+        .map((tabela) => ({
+          codigoturma: tabela.codigoturma,
+          professor: tabela.professor,
+          disciplina: tabela.disciplina,
+          quantidade: tabela.quantidade,
+          codigohorario: tabela.codigohorario == null || tabela.codigohorario == "" ? 0 : tabela.codigohorario
+        }));
+
+      setExcelTurma(mappedExcelTurma);
     };
-  };
+  }
 
   const handleUploadExcel = async () => {
     try {
@@ -28,22 +41,19 @@ export default function ImportarTurmasExcelModal() {
         return;
       }
 
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      // const response = await SalaService.createRelatorioFinal(formData);
-      console.log("Arquivo selecionado:", selectedFile.name);
+      const response = await TurmaService.importarExcelTurma(excelTurma);
+      console.log("response", response);
       setDialogImportarExcel(false);
       setSelectedFile(null);
-      // getTurmasData(); // Atualiza a tabela após upload
     } catch (error) {
       console.error("Erro ao enviar o arquivo:", error);
     }
   };
 
   return (
-    <Dialog>
+    <Dialog open={dialogImportarExcel} onOpenChange={setDialogImportarExcel}>
       <DialogTrigger asChild>
-        <Button className="rounded-md bg-blue-600 text-white p-2 min-w-[200px] h-[60px] text-center">
+        <Button onClick={() => setDialogImportarExcel(true)} className="rounded-md bg-blue-600 text-white p-2 min-w-[200px] h-[60px] text-center">
           Importar Turmas (Excel)
         </Button>
       </DialogTrigger>

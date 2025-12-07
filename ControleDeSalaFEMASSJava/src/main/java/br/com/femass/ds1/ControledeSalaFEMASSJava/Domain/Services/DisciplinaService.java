@@ -41,7 +41,8 @@ public class DisciplinaService {
     @Transactional
     public Disciplina updateDisciplina(int id, Disciplina updatedDisciplina) {
         Disciplina existingDisciplina = disciplinaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Disciplina não encontrada com o ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Disciplina não encontrada com o ID: " + id));
 
         existingDisciplina.setNome(updatedDisciplina.getNome());
         existingDisciplina.setNecessitaLaboratiorio(updatedDisciplina.getNecessitaLaboratiorio());
@@ -56,5 +57,10 @@ public class DisciplinaService {
             return true;
         }
         return false; // Or throw an exception indicating the disciplina was not found
+    }
+
+    public Disciplina findDisciplinasByNome(String nome) {
+        List<Disciplina> disciplinas = disciplinaRepository.findByNome(nome);
+        return disciplinas.isEmpty() ? null : disciplinas.get(0);
     }
 }
