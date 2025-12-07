@@ -89,30 +89,28 @@ export default function AlocarTurmaSala() {
   // Mapeamento de horários compartilhado
   const horarioMapping = {
     1: [
-      { diaSemana: 1, tempoAula: 1 },
-      // { diaSemana: 1, tempoAula: 2 },
-      { diaSemana: 2, tempoAula: 2 },
+      { diaSemana: 1, tempoAula: "TEMPO1" },
+      { diaSemana: 2, tempoAula: "TEMPO2" },
     ],
     2: [
-      { diaSemana: 1, tempoAula: 2 }, //mudar tempo de aula de 2 para 3 quando ajeitado o banco
-      { diaSemana: 2, tempoAula: 1 },
+      { diaSemana: 1, tempoAula:"TEMPO2" }, 
+      { diaSemana: 2, tempoAula:"TEMPO1" },
     ],
     3: [
-      { diaSemana: 2, tempoAula: 3 },
-      { diaSemana: 3, tempoAula: 3 },
+      { diaSemana: 2, tempoAula:"TEMPO3" },
+      { diaSemana: 3, tempoAula:"TEMPO3"},
     ],
     4: [
-      { diaSemana: 3, tempoAula: 1 },
-      //{ diaSemana: 3, tempoAula: 2 },
-      { diaSemana: 4, tempoAula: 2 },
+      { diaSemana: 3, tempoAula:"TEMPO1" },
+      { diaSemana: 4, tempoAula:"TEMPO3"},
     ],
     5: [
-      { diaSemana: 4, tempoAula: 1 },
-      { diaSemana: 5, tempoAula: 2 },
+      { diaSemana: 4, tempoAula:"TEMPO1" },
+      { diaSemana: 5, tempoAula:"TEMPO2" },
     ],
     6: [
-      { diaSemana: 4, tempoAula: 3 },
-      { diaSemana: 5, tempoAula: 1 },
+      { diaSemana: 4, tempoAula: "TEMPO3"},
+      { diaSemana: 5, tempoAula: "TEMPO1"},
     ],
   };
 
@@ -216,7 +214,7 @@ export default function AlocarTurmaSala() {
         horarios.map(async (horario) => {
           const response = await SalaService.getAllSalasDisponiveis(
             diaSemanaMap[horario.diaSemana],
-            tempoMap[horario.tempoAula]
+            horario.tempoAula //tempoMap[horario.tempoAula]
           );
           return response.data || [];
         })
@@ -281,7 +279,7 @@ export default function AlocarTurmaSala() {
           idTurma: turma.id,
           idSala: selectedSala.id,
           diaSemana: diaSemanaMap[horario.diaSemana],
-          tempo: tempoMap[horario.tempoAula],
+          tempo: horario.tempoAula//tempoMap[horario.tempoAula],
         };
 
         await TurmaService.createAlocacaoTurma(payload);
@@ -468,11 +466,11 @@ export default function AlocarTurmaSala() {
   };
 
 
-  //comentando para subir testando
+  //comentando para subir 
   const gerarPDF = async () => {
-    alocacoesResponseAPI = await TurmaService.getAllAlocacoes();
-    alocacoes_data = alocacoesResponsea.data;
-    
+    const alocacoesResponseAPI = await TurmaService.getAllAlocacoes();
+    const alocacoes_data = alocacoesResponseAPI.data;
+  
 
     const html2pdf = (await import("html2pdf.js")).default;
 
