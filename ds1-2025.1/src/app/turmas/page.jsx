@@ -93,24 +93,24 @@ export default function AlocarTurmaSala() {
       { diaSemana: 2, tempoAula: "TEMPO2" },
     ],
     2: [
-      { diaSemana: 1, tempoAula:"TEMPO2" }, 
-      { diaSemana: 2, tempoAula:"TEMPO1" },
+      { diaSemana: 1, tempoAula: "TEMPO2" },
+      { diaSemana: 2, tempoAula: "TEMPO1" },
     ],
     3: [
-      { diaSemana: 2, tempoAula:"TEMPO3" },
-      { diaSemana: 3, tempoAula:"TEMPO3"},
+      { diaSemana: 2, tempoAula: "TEMPO3" },
+      { diaSemana: 3, tempoAula: "TEMPO3" },
     ],
     4: [
-      { diaSemana: 3, tempoAula:"TEMPO1" },
-      { diaSemana: 4, tempoAula:"TEMPO3"},
+      { diaSemana: 3, tempoAula: "TEMPO1" },
+      { diaSemana: 4, tempoAula: "TEMPO3" },
     ],
     5: [
-      { diaSemana: 4, tempoAula:"TEMPO1" },
-      { diaSemana: 5, tempoAula:"TEMPO2" },
+      { diaSemana: 4, tempoAula: "TEMPO1" },
+      { diaSemana: 5, tempoAula: "TEMPO2" },
     ],
     6: [
-      { diaSemana: 4, tempoAula: "TEMPO3"},
-      { diaSemana: 5, tempoAula: "TEMPO1"},
+      { diaSemana: 4, tempoAula: "TEMPO3" },
+      { diaSemana: 5, tempoAula: "TEMPO1" },
     ],
   };
 
@@ -118,7 +118,7 @@ export default function AlocarTurmaSala() {
   const getTurmasData = async () => {
     try {
       // 1 - pega turmas
-      const turmasResponse = await TurmaService.getAll();
+      const turmasResponse = await TurmaService.getAllTurmas();
       const turmas = turmasResponse.data;
 
       // 2 - pega todas as alocações
@@ -470,7 +470,7 @@ export default function AlocarTurmaSala() {
   const gerarPDF = async () => {
     const alocacoesResponseAPI = await TurmaService.getAllAlocacoes();
     const alocacoes_data = alocacoesResponseAPI.data;
-  
+
 
     const html2pdf = (await import("html2pdf.js")).default;
 
@@ -812,7 +812,7 @@ export default function AlocarTurmaSala() {
                       .sort((a, b) => b.quantidadeAlunos - a.quantidadeAlunos) // Ordenação existente
                       .map((row) => (
                         <TableRow key={row.id}>
-                          <TableCell>{row.disciplina || "Sem Nome"}</TableCell>
+                          <TableCell>{row.disciplina.nome || "Sem Nome"}</TableCell>
                           <TableCell>
                             {row.professor || "Não informado"}
                           </TableCell>
@@ -921,7 +921,7 @@ export default function AlocarTurmaSala() {
                         <>
                           <p>
                             Tem certeza que deseja alocar a turma{" "}
-                            {selectedTurma.disciplina} do professor{" "}
+                            {selectedTurma.disciplina.nome} do professor{" "}
                             {selectedTurma.professor} na sala{" "}
                             {selectedSala.numero} bloco {selectedSala.bloco}?
                           </p>
