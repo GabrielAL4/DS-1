@@ -66,7 +66,7 @@ export default function Home() {
     }
 
     try {
-      console.log("Arquivo selecionado:", selectedFile.name);
+      //console.log("Arquivo selecionado:", selectedFile.name);
       setTabelaOriginal([]);
       setTabela([]);
       setDialogOpen(false);

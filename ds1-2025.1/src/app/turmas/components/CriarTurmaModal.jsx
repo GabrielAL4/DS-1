@@ -105,12 +105,10 @@ export default function CriarTurmaModal({ setTabela }) {
         turmaGrandeAntiga: novaTurma.turmaGrandeAntiga
       };
 
-      console.log("Payload de criação de turma:", turmaPayload);
+      // console.log("Payload de criação de turma:", turmaPayload);
 
       const turmaResponse = await TurmaService.createTurma(turmaPayload);
       const turmaCriada = turmaResponse.data;
-
-  
 
       // await TurmaService.createAlocacaoTurma(alocacaoPayload);
 
@@ -286,7 +284,7 @@ export default function CriarTurmaModal({ setTabela }) {
               </Label>
             </div>
 
-              {/* Quantidade de aluno */}
+            {/* Quantidade de aluno */}
             <div className="flex flex-col ml-6">
               <Label htmlFor="quantidadeAlunos" className="pb-2">
                 Quantidade de aluno:
@@ -299,8 +297,6 @@ export default function CriarTurmaModal({ setTabela }) {
                 required
               />
             </div>
-
-       
           </div>
 
           <DialogFooter>

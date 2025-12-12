@@ -10,8 +10,8 @@ export const httpClient = axios.create({
 // Interceptor para logs de debug
 httpClient.interceptors.request.use(
   (config) => {
-    console.log('Requisição sendo feita:', config.method?.toUpperCase(), config.url);
-    console.log('Payload:', config.data);
+    //console.log('Requisição sendo feita:', config.method?.toUpperCase(), config.url);
+    // console.log('Payload:', config.data);
     return config;
   },
   (error) => {
@@ -22,7 +22,7 @@ httpClient.interceptors.request.use(
 
 httpClient.interceptors.response.use(
   (response) => {
-    console.log('Resposta recebida:', response.status, response.data);
+    //console.log('Resposta recebida:', response.status, response.data);
     return response;
   },
   (error) => {

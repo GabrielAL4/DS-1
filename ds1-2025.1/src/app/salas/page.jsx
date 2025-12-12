@@ -57,7 +57,6 @@ export default function CadastrarSala() {
   useEffect(() => {
     SalaService.getAllSalas()
       .then((response) => {
-        console.log('Salas carregadas:', response.data);
         setTabela(response.data || []);
       })
       .catch((error) => {
@@ -68,7 +67,6 @@ export default function CadastrarSala() {
 
   const handleSubmitRoom = async (event) => {
     event.preventDefault();
-    console.log("Função handleSubmitRoom chamada");
 
     const payload = {
       bloco: bloco,
@@ -79,11 +77,20 @@ export default function CadastrarSala() {
       possuiLousaDigital: lousa ? lousa : false,
     };
 
-    console.log("Payload sendo enviado:", payload);
+    const todasSalas = await SalaService.getAllSalas();
+
+    const salaDuplicada = todasSalas.data?.some(sala => {
+      return sala.numero === payload.numero && sala.bloco === payload.bloco;
+    });
+
+    if (salaDuplicada) {
+      alert("Sala já cadastrada! Por favor, cadastre uma nova.");
+
+      return;
+    }
 
     try {
       const response = await SalaService.createSala(payload);
-      console.log("Resposta do servidor:", response);
       setTabela((prevTable) => [...prevTable, response.data]);
 
       // Limpar os campos após salvar
@@ -168,40 +175,19 @@ export default function CadastrarSala() {
       .finally(() => setIsDialogEditOpen(false));
   };
 
-  const handleDeleteSala = async () => {
-    let indisponibilidades = [];
-
-    SalaService.getSalaById(selectedSalaId)
-      .then(async (response) => {
-        indisponibilidades = response.data.indisponibilidades;
-
-        if (indisponibilidades.length === 0) {
-          alert("Nenhuma indisponibilidade encontrada para esta sala.");
-          setIsDialogDeleteOpen(false);
-          return;
-        }
-
-        // 2. Deletar cada indisponibilidade individualmente
-        for (const indisponibilidade of indisponibilidades) {
-          SalaService.deleteIndisponibilidadeSala(selectedSalaId, indisponibilidade.id)
-        }
-
-        // 3. Atualizar a tabela de indisponibilidades e fechar o modal
-        await fetchIndisponibilidades(selectedSalaId);
-        setIsDialogDeleteOpen(false);
-
-        alert("Todas as indisponibilidades da sala foram excluídas com sucesso.");
-      }).catch((error) => {
-        console.error("Erro ao excluir indisponibilidades:", error);
-        alert("Erro ao excluir as indisponibilidades.");
-      })
-  };
+  const handleDeleteSala = async (event) => {
+    event.preventDefault();
+    console.log(event)
+    // const response = await SalaService.deleteSala(salaId);
+    // console.log(response.data);
+    // setIsDialogDeleteOpen(false);
+  }
 
   //Função para Buscar Indisponibilidades
   const fetchIndisponibilidades = async () => {
     IndisponibilidadeService.getAllIndisponibilidades()
       .then((response) => {
-        console.log('chama indisponibilidades', response);
+        //console.log('chama indisponibilidades', response);
         // Atualiza o estado com as indisponibilidades
         setIndisponibilidades(response.data || []);
         setIsIndisponibilidadeListOpen(true); // Abre o modal
@@ -214,11 +200,11 @@ export default function CadastrarSala() {
 
   //organiza as indisponibilidades em um formato que facilite a exibição
   const organizeIndisponibilidades = () => {
-    console.log("Organizando indisponibilidades:", indisponibilidades);
+    //console.log("Organizando indisponibilidades:", indisponibilidades);
     const tabela = Array(3).fill(null).map(() => Array(5).fill(null)); // 3 horários, 5 dias
 
     indisponibilidades.forEach((indisponibilidade) => {
-      console.log("Processando indisponibilidade:", indisponibilidade);
+      //console.log("Processando indisponibilidade:", indisponibilidade);
 
       // Mapear DayOfWeek para índice (1-5)
       let diaSemanaIndex;
@@ -240,7 +226,7 @@ export default function CadastrarSala() {
         default: console.warn("Tempo não reconhecido:", indisponibilidade.tempo); return;
       }
 
-      console.log(`Marcando posição [${tempoIndex}][${diaSemanaIndex}]`);
+      //console.log(`Marcando posição [${tempoIndex}][${diaSemanaIndex}]`);
       tabela[tempoIndex][diaSemanaIndex] = "X"; // Marca o horário indisponível
     });
 
@@ -527,9 +513,37 @@ export default function CadastrarSala() {
                       </button>
 
                       {/* Botão de Excluir */}
-                      <button className="mr-2 text-red-500 hover:text-red-700" onClick={() => handleOpenDeleteDialog(row)}>
-                        <Trash2 />
-                      </button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button className="mr-2 text-red-500 hover:text-red-700">
+                            <Trash2 />
+                          </Button>
+                        </DialogTrigger>
+
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Excluir Sala</DialogTitle>
+                          </DialogHeader>
+
+                          <form onSubmit={handleDeleteSala()}>
+                            <p>
+                              Tem certeza que deseja excluir a sala{" "} {row.numero} do bloco {row.bloco} {row.id}?
+                            </p>
+
+                            <DialogFooter>
+                              <DialogClose asChild>
+                                <Button variant="outline">
+                                  Cancelar
+                                </Button>
+                              </DialogClose>
+
+                              <Button variant="destructive" type="submit">
+                                Excluir
+                              </Button>
+                            </DialogFooter>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
 
                       {/* Botão de Visualizar */}
                       <button className="mr-2 text-green-500 hover:text-green-700" onClick={() => fetchIndisponibilidades(row.id)}>
@@ -656,26 +670,6 @@ export default function CadastrarSala() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsIndisponibilidadeListOpen(false)}>
               Fechar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isDialogDeleteOpen} onOpenChange={setIsDialogDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Excluir Indisponibilidades</DialogTitle>
-          </DialogHeader>
-          <p>
-            Tem certeza que deseja excluir <b>todas as indisponibilidades</b> da sala{" "}
-            {editSala.numero} do bloco {editSala.bloco}?
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogDeleteOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteSala}>
-              Excluir
             </Button>
           </DialogFooter>
         </DialogContent>

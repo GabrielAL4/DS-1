@@ -42,7 +42,7 @@ export default function ImportarTurmasExcelModal() {
       }
 
       const response = await TurmaService.importarExcelTurma(excelTurma);
-      console.log("response", response);
+      //console.log("response", response);
       setDialogImportarExcel(false);
       setSelectedFile(null);
     } catch (error) {

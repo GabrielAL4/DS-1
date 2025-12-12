@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DisciplinaService } from "@/services/DisciplinaService";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function CadastrarSala() {
@@ -37,7 +37,7 @@ export default function CadastrarSala() {
   useEffect(() => {
     DisciplinaService.getAllDisciplinas()
       .then((response) => {
-        console.log('Salas Disciplinas:', response.data);
+        //console.log('Salas Disciplinas:', response.data);
         setTabela(response.data || []);
       })
       .catch((error) => {
@@ -56,11 +56,11 @@ export default function CadastrarSala() {
       necessitaLousaDigital: necessitaLousaDigital ? necessitaLousaDigital : false,
     };
 
-    console.log("Payload sendo enviado:", payload);
+    //console.log("Payload sendo enviado:", payload);
 
     try {
       const response = await DisciplinaService.createDisciplina(payload);
-      console.log("Resposta do servidor:", response);
+      //("Resposta do servidor:", response);
       setTabela((prevTable) => [...prevTable, response.data]);
 
       setArCondicionado(null);
@@ -96,14 +96,14 @@ export default function CadastrarSala() {
 
   // Atualizar os dados da sala
   const editarDisciplina = async () => {
-      const payload = {
+    const payload = {
       nome,
       necessitaLaboratiorio,
       necessitaArCondicionado,
       necessitaLousaDigital,
     };
 
-  try {
+    try {
       await DisciplinaService.editDisciplina(selectedDisciplinaId, payload);
       setTabela(prev =>
         prev.map(item =>
@@ -146,7 +146,7 @@ export default function CadastrarSala() {
               className="border border-black"
               value={filterValue}
               onChange={(e) =>
-                setDisciplina(e.target.value )
+                setDisciplina(e.target.value)
               }
             />
 
@@ -348,7 +348,7 @@ export default function CadastrarSala() {
         </DialogContent>
       </Dialog>
 
-            <Dialog open={isDialogDeleteOpen} onOpenChange={setIsDialogDeleteOpen}>
+      <Dialog open={isDialogDeleteOpen} onOpenChange={setIsDialogDeleteOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Excluir Disciplina</DialogTitle>

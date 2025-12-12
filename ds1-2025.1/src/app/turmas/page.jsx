@@ -167,6 +167,8 @@ export default function AlocarTurmaSala() {
       6: "TEMPO6",
     };
 
+    console.log('essa disgraça', selectedTurma, selectedSala);
+
     const turma = {
       turmaId: selectedTurma.id,
       salaId: selectedSala.id,
@@ -282,6 +284,8 @@ export default function AlocarTurmaSala() {
           tempo: horario.tempoAula//tempoMap[horario.tempoAula],
         };
 
+        console.log('bora', selectedSala.id, turma.id)
+
         await TurmaService.createAlocacaoTurma(payload);
         await getTurmasData();
       }
@@ -330,8 +334,6 @@ export default function AlocarTurmaSala() {
     try {
       const response = await TurmaService.getTurmaById(id);
       const alocacoes = response.data.alocacoes || [];
-
-
 
       const alocacoesComDetalhes = alocacoes.map((alocacao) => {
         const salaEncontrada = salas.find(
