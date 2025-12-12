@@ -385,8 +385,6 @@ export default function AlocarTurmaSala() {
         value.toString().toLowerCase().includes(filterValue.toLowerCase())
     );
 
-
-
     // Lógica de filtragem com base no dia
     const matchesDay = filterDia
       ? dayToCodeMapping[filterDia]?.includes(row.codigoHorario)
@@ -739,6 +737,9 @@ export default function AlocarTurmaSala() {
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
                 </select>
                 <div className="flex items-center gap-2 flex-wrap">
                   <CriarTurmaModal setTabela={setTabela} />

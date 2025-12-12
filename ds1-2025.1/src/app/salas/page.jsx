@@ -21,8 +21,9 @@ import {
 } from "@/components/ui/table";
 import { IndisponibilidadeService } from "@/services/IndisponibilidadeService";
 import { SalaService } from "@/services/SalaService";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
+import { DeletarSalaModal } from "./DeletarSalaModal";
 
 export default function CadastrarSala() {
   const [filterValue, setFilterValue] = useState("");
@@ -174,14 +175,6 @@ export default function CadastrarSala() {
       })
       .finally(() => setIsDialogEditOpen(false));
   };
-
-  const handleDeleteSala = async (event) => {
-    event.preventDefault();
-    console.log(event)
-    // const response = await SalaService.deleteSala(salaId);
-    // console.log(response.data);
-    // setIsDialogDeleteOpen(false);
-  }
 
   //Função para Buscar Indisponibilidades
   const fetchIndisponibilidades = async () => {
@@ -512,38 +505,13 @@ export default function CadastrarSala() {
                         <Pencil onClick={() => handleEditSala(row)} />
                       </button>
 
+                      {console.log(row)}
+
                       {/* Botão de Excluir */}
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button className="mr-2 text-red-500 hover:text-red-700">
-                            <Trash2 />
-                          </Button>
-                        </DialogTrigger>
-
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Excluir Sala</DialogTitle>
-                          </DialogHeader>
-
-                          <form onSubmit={handleDeleteSala()}>
-                            <p>
-                              Tem certeza que deseja excluir a sala{" "} {row.numero} do bloco {row.bloco} {row.id}?
-                            </p>
-
-                            <DialogFooter>
-                              <DialogClose asChild>
-                                <Button variant="outline">
-                                  Cancelar
-                                </Button>
-                              </DialogClose>
-
-                              <Button variant="destructive" type="submit">
-                                Excluir
-                              </Button>
-                            </DialogFooter>
-                          </form>
-                        </DialogContent>
-                      </Dialog>
+                      <DeletarSalaModal
+                        row={row}
+                        setTabela={setTabela}
+                      />
 
                       {/* Botão de Visualizar */}
                       <button className="mr-2 text-green-500 hover:text-green-700" onClick={() => fetchIndisponibilidades(row.id)}>

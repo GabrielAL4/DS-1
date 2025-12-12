@@ -53,7 +53,7 @@ export class SalaService {
   }
 
   static async deleteSala(id) {
-    const response = httpClient.delete(`/Sala/${id}`);
+    const response = await httpClient.delete(`/Sala/${id}`);
 
     return response;
   }
