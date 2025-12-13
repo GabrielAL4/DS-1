@@ -337,23 +337,25 @@ export default function AlocarTurmaSala() {
 
   const handleAlocacoesTurma = async (id) => {
     try {
-      const response = await TurmaService.getTurmaById(id);
-      const alocacoes = response.data.alocacoes || [];
+      // Busca todas as alocações e filtra pela turma
+      const resp = await TurmaService.getAllAlocacoes();
+      const todasAlocacoes = resp.data || [];
+      const alocacoesTurma = todasAlocacoes.filter(a => a?.turma?.id === id);
 
-      const alocacoesComDetalhes = alocacoes.map((alocacao) => {
-        const salaEncontrada = salas.find(
-          (sala) => sala.id === alocacao.salaId
-        );
+      const diaSemanaDisplay = {
+        MONDAY: "Segunda-feira",
+        TUESDAY: "Terça-feira",
+        WEDNESDAY: "Quarta-feira",
+        THURSDAY: "Quinta-feira",
+        FRIDAY: "Sexta-feira",
+      };
 
-        return {
-          diaSemana: diasDaSemana[alocacao.diaSemana] || "Dia inválido",
-          horario: `Horário ${alocacao.tempo}`,
-          turmaId: alocacao.turmaId || "Não definido",
-          sala: salaEncontrada
-            ? `${salaEncontrada.bloco}-${salaEncontrada.numero}`
-            : "Sala não encontrada",
-        };
-      });
+      const alocacoesComDetalhes = alocacoesTurma.map((a) => ({
+        diaSemana: diaSemanaDisplay[a.diaSemana] || "Dia inválido",
+        horario: `Horário ${a.tempo}`,
+        turmaId: a.turma?.id ?? "Não definido",
+        sala: a.sala ? `${a.sala.bloco}-${a.sala.numero}` : "Sala não encontrada",
+      }));
 
       setAlocacoes(alocacoesComDetalhes);
       setDialogOpen2(true);
@@ -696,8 +698,6 @@ export default function AlocarTurmaSala() {
         const deleteResponse = await TurmaService.deleteAlocacaoTurma(alocacao.id);
         console.log("Resposta da deleção:", deleteResponse);
       }
-
-      console.log(`Total de alocações deletadas: ${totalDeletadas}`);
 
       // Recarrega os dados do backend para garantir sincronização
       await getTurmasData();
