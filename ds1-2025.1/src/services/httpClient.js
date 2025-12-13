@@ -11,7 +11,8 @@ export const httpClient = axios.create({
 httpClient.interceptors.request.use(
   (config) => {
     //console.log('Requisição sendo feita:', config.method?.toUpperCase(), config.url);
-    // console.log('Payload:', config.data);
+    console.log('Payload:', config.data);
+   
     return config;
   },
   (error) => {

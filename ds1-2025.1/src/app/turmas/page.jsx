@@ -147,6 +147,10 @@ export default function AlocarTurmaSala() {
 
   useEffect(() => {
     getTurmasData();
+    // Carregar todas as salas para uso posterior
+    SalaService.getAllSalas()
+      .then(response => setSalas(response.data))
+      .catch(error => console.error("Erro ao carregar salas:", error));
   }, []);
 
   const handleAlocarTurmaSala = async () => {
@@ -594,32 +598,48 @@ export default function AlocarTurmaSala() {
       alert("Erro ao buscar alocações.");
     }
   };
+  //teste para remover alocação
+  const handleRemoverAlocacao = async (id) => { 
+    try {
+      await TurmaService.deleteAlocacaoTurma(id);
+      alert("Alocação removida com sucesso!");
+      getTurmasData();
+    } catch (error) {
+      console.error("Erro ao remover alocação:", error);
+      alert("Erro ao remover alocação.");
+    }
+  };
 
   const handleDeletarAlocacao = async (turmaId) => {
     try {
-      const response = await TurmaService.getTurmaById(turmaId);
-      const alocacoes = response.data.alocacoes || [];
+      console.log("Buscando alocações para turma ID:", turmaId);
+      
+      // Busca todas as alocações e filtra pela turma
+      const alocacoesResponse = await TurmaService.getAllAlocacoes();
+      const todasAlocacoes = alocacoesResponse.data || [];
+      const alocacoes = todasAlocacoes.filter(a => a.turma.id === turmaId);
+
+      console.log("Alocações encontradas:", alocacoes);
 
       if (alocacoes.length === 0) {
         alert("Nenhuma alocação encontrada para esta turma.");
         return;
       }
 
+      // Remove cada alocação da turma no backend
       for (const alocacao of alocacoes) {
-        await TurmaService.deleteAlocacaoTurma(alocacao.id);
+        console.log("Deletando alocação ID:", alocacao.id);
+        const deleteResponse = await TurmaService.deleteAlocacaoTurma(alocacao.id);
+        console.log("Resposta da deleção:", deleteResponse);
       }
 
-      // Atualiza a tabela localmente
-      const updatedTabela = tabela.map((row) => {
-        if (row.id === turmaId) {
-          return { ...row, alocada: false, salaSelecionada: null };
-        }
-        return row;
-      });
-      setTabela(updatedTabela);
+      // Recarrega os dados do backend para garantir sincronização
+      await getTurmasData();
+      alert("Alocação removida com sucesso!");
     } catch (error) {
       console.error("Erro ao tentar remover a alocação:", error);
-      alert("Erro ao tentar remover a alocação.");
+      console.error("Detalhes do erro:", error.response?.data || error.message);
+      alert(`Erro ao tentar remover a alocação: ${error.response?.data?.message || error.message}`);
     }
   };
   //Função para alocar turmas automaticamente
@@ -644,7 +664,7 @@ export default function AlocarTurmaSala() {
       setLoading(true); // Exibe o estado de carregamento
 
       // Busque todas as turmas para obter as alocações
-      const response = await SalaService.getAllSalas();
+      const response = await TurmaService.getAllTurmas();
       const turmas = response.data;
 
       if (!turmas || turmas.length === 0) {
@@ -652,23 +672,24 @@ export default function AlocarTurmaSala() {
         return;
       }
 
-      // Itere sobre as turmas e delete suas alocações
-      for (const turma of turmas) {
-        const alocacoesResponse = await SalaService.getSalaById(turma.id);
-        const alocacoes = alocacoesResponse.data.alocacoes || [];
+      // Busca todas as alocações de uma vez
+      const alocacoesResponse = await TurmaService.getAllAlocacoes();
+      const todasAlocacoes = alocacoesResponse.data || [];
 
-        for (const alocacao of alocacoes) {
-          await SalaService.deleteIndisponibilidadeSala(alocacao.id);
-        }
+      console.log(`Total de alocações encontradas: ${todasAlocacoes.length}`);
+
+      // Deleta todas as alocações
+      for (const alocacao of todasAlocacoes) {
+        console.log("Deletando alocação ID:", alocacao.id);
+        const deleteResponse = await TurmaService.deleteAlocacaoTurma(alocacao.id);
+        console.log("Resposta da deleção:", deleteResponse);
       }
 
-      // Limpa as alocações na tabela local
-      const updatedTabela = tabela.map((row) => ({
-        ...row,
-        alocada: false,
-        salaSelecionada: null,
-      }));
-      setTabela(updatedTabela);
+      console.log(`Total de alocações deletadas: ${totalDeletadas}`);
+
+      // Recarrega os dados do backend para garantir sincronização
+      await getTurmasData();
+      alert(`As alocações foram removidas com sucesso!`);
     } catch (error) {
       console.error("Erro ao deletar todas as alocações:", error);
       alert("Erro ao deletar todas as alocações.");
@@ -837,9 +858,12 @@ export default function AlocarTurmaSala() {
                             {row.necessitaArCondicionado ? "Sim" : "Não"}
                           </TableCell>
                           <TableCell>
-                            {typeof row.salaSelecionada === "string"
-                              ? row.salaSelecionada
-                              : "Não alocada"}
+                            {row.alocada && row.salaSelecionada ? (
+                              (() => {
+                                const sala = salas.find(s => s.id === row.salaSelecionada);
+                                return sala ? `${sala.numero}-${sala.bloco}` : "Sala não encontrada";
+                              })()
+                            ) : "Não alocada"}
                           </TableCell>
                           <TableCell>
                             {row.alocada ? (
@@ -893,7 +917,7 @@ export default function AlocarTurmaSala() {
                           <TableCell>
                             {row.alocada ? (
                               <button
-                                className="rounded-md bg-red-600 text-white p-2"
+                                className="rounded-md bg-red-600 text-black p-2"
                                 onClick={() => handleDeletarAlocacao(row.id)}
                               >
                                 Limpar
