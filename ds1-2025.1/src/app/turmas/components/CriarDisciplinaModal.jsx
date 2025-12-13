@@ -115,7 +115,7 @@ export default function CriarDisciplinaModal() {
                   checked={novaDisciplina.necessitaArCondicionado}
                   onChange={(e) => handleNovaDisciplinaChange("necessitaArCondicionado", e.target.checked)}
                 />
-                <Label htmlFor="necessitaArCondicionado" className="text-right">Lousa Digital</Label>
+                <Label htmlFor="necessitaArCondicionado" className="text-right">Ar Condicionado</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Input
@@ -125,7 +125,7 @@ export default function CriarDisciplinaModal() {
                   onChange={(e) => handleNovaDisciplinaChange("necessitaLousaDigital", e.target.checked)}
                   className="w-4 h-4"
                 />
-                <Label htmlFor="necessitaLousaDigital" className="text-sm font-medium">Ar</Label>
+                <Label htmlFor="necessitaLousaDigital" className="text-sm font-medium">Lousa Digital</Label>
               </div>
             </div>
           </div>
