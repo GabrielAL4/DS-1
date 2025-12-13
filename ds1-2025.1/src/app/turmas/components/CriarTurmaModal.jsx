@@ -12,14 +12,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DisciplinaService } from "@/services/DisciplinaService";
-import { SalaService } from "@/services/SalaService";
 import { TurmaService } from "@/services/TurmaService";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function CriarTurmaModal({ setTabela }) {
   const [open, setOpen] = useState(false);
-  const [salas, setSalas] = useState([]);
   const [disciplinas, setDisciplinas] = useState([]);
   const [novaTurma, setNovaTurma] = useState({
     professor: "",
@@ -29,16 +27,6 @@ export default function CriarTurmaModal({ setTabela }) {
     bloco: "",
     salaId: ""
   });
-
-  const getSalasData = async () => {
-    try {
-      const response = await SalaService.getAllSalas();
-      setSalas(response.data || []);
-    } catch (error) {
-      console.error("Erro ao buscar salas:", error);
-      setSalas([]);
-    }
-  };
 
   const getDisciplinasData = async () => {
     try {
@@ -52,7 +40,6 @@ export default function CriarTurmaModal({ setTabela }) {
 
   useEffect(() => {
     if (open) {
-      getSalasData();
       getDisciplinasData();
     }
   }, [open]);
@@ -76,6 +63,31 @@ export default function CriarTurmaModal({ setTabela }) {
       return;
     }
 
+    const responseTodasTurmas = await TurmaService.getAllTurmas();
+
+    const horarioToCode = {
+      TEMPO1: 1,
+      TEMPO2: 2,
+      TEMPO3: 3,
+      TEMPO4: 4,
+      TEMPO5: 5,
+      TEMPO6: 6
+    };
+
+    const turmaDuplicada = responseTodasTurmas.data?.some(turma => {
+      return (
+        turma.professor === novaTurma.professor &&
+        turma.disciplina?.id === Number(novaTurma.disciplina) &&
+        turma.codigoHorario === horarioToCode[novaTurma.horario]
+      );
+    });
+
+    if (turmaDuplicada) {
+      alert("Turma já cadastrada! Por favor, cadastre uma nova.");
+
+      return;
+    }
+
     try {
       // Busca dados da disciplina completa
       const disciplinaSelecionada = disciplinas.find(
@@ -86,16 +98,6 @@ export default function CriarTurmaModal({ setTabela }) {
         return;
       }
 
-
-      const horarioToCode = {
-        TEMPO1: 1,
-        TEMPO2: 2,
-        TEMPO3: 3,
-        TEMPO4: 4,
-        TEMPO5: 5,
-        TEMPO6: 6
-      };
-
       const turmaPayload = {
         id: 0,
         professor: novaTurma.professor,
@@ -105,12 +107,7 @@ export default function CriarTurmaModal({ setTabela }) {
         turmaGrandeAntiga: novaTurma.turmaGrandeAntiga
       };
 
-      // console.log("Payload de criação de turma:", turmaPayload);
-
-      const turmaResponse = await TurmaService.createTurma(turmaPayload);
-      const turmaCriada = turmaResponse.data;
-
-      // await TurmaService.createAlocacaoTurma(alocacaoPayload);
+      await TurmaService.createTurma(turmaPayload);
 
       const response = await TurmaService.getAllTurmas();
       const turmas = response.data || [];
