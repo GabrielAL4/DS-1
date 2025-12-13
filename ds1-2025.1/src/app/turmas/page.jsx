@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 // import { ClassService } from "@/services/ClassService";
 import { SalaService } from "@/services/SalaService";
 import { TurmaService } from "@/services/TurmaService";
+import { DisciplinaService } from "@/services/DisciplinaService";
 import { Eye, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import CriarDisciplinaModal from "./components/CriarDisciplinaModal";
@@ -547,25 +548,36 @@ export default function AlocarTurmaSala() {
         return;
       }
 
-      // Atualiza a tabela localmente
-      const updatedTabela = tabela.map((row) => {
-        if (row.id === selectedDisciplina.id) {
-          return {
-            ...row,
-            necessitaLaboratorio: selectedDisciplina.necessitaLaboratorio,
-            necessitaLoucaDigital: selectedDisciplina.necessitaLoucaDigital,
-            necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
-          };
-        }
-        return row;
-      });
+      // Determina a disciplina associada à turma selecionada
+      const disciplina = selectedDisciplina.disciplina || {};
 
-      setTabela(updatedTabela);
+      // Prepara o payload com os nomes corretos do backend
+      const payload = {
+        id: disciplina.id,
+        nome: disciplina.nome,
+        // Mapeia campos para os nomes do backend
+        necessitaLaboratiorio:
+          selectedDisciplina?.disciplina?.necessitaLaboratiorio ?? selectedDisciplina?.necessitaLaboratorio ?? false,
+        necessitaArCondicionado:
+          selectedDisciplina?.disciplina?.necessitaArCondicionado ?? selectedDisciplina?.necessitaArCondicionado ?? false,
+        necessitaLousaDigital:
+          selectedDisciplina?.disciplina?.necessitaLousaDigital ?? selectedDisciplina?.necessitaLoucaDigital ?? false,
+      };
+
+      console.log("Salvando preferências da disciplina:", payload);
+
+      // Salva no backend (Disciplina)
+      await DisciplinaService.editDisciplina(disciplina.id, payload);
+
+      // Recarrega os dados do backend para garantir sincronização
+      await getTurmasData();
+
       setDialogEditOpen(false);
       alert("Preferências atualizadas com sucesso!");
     } catch (error) {
       alert("Erro ao salvar as alterações.");
       console.error("Erro ao salvar as alterações:", error);
+      console.error("Detalhes do erro:", error.response?.data || error.message);
     }
   };
 
@@ -849,13 +861,13 @@ export default function AlocarTurmaSala() {
                             {row.codigoHorario || "Não definido"}
                           </TableCell>
                           <TableCell>
-                            {row.necessitaLaboratorio ? "Sim" : "Não"}
+                            {row.disciplina?.necessitaLaboratiorio ? "Sim" : "Não"}
                           </TableCell>
                           <TableCell>
-                            {row.necessitaLoucaDigital ? "Sim" : "Não"}
+                            {row.disciplina?.necessitaLousaDigital ? "Sim" : "Não"}
                           </TableCell>
                           <TableCell>
-                            {row.necessitaArCondicionado ? "Sim" : "Não"}
+                            {row.disciplina?.necessitaArCondicionado ? "Sim" : "Não"}
                           </TableCell>
                           <TableCell>
                             {row.alocada && row.salaSelecionada ? (
@@ -1074,14 +1086,15 @@ export default function AlocarTurmaSala() {
                       <Input
                         id="lab"
                         type="checkbox"
-                        checked={
-                          selectedDisciplina?.necessitaLaboratorio || false
-                        }
+                        checked={selectedDisciplina?.disciplina?.necessitaLaboratiorio || false}
                         onChange={(e) =>
-                          setSelectedDisciplina({
-                            ...selectedDisciplina,
-                            necessitaLaboratorio: e.target.checked,
-                          })
+                          setSelectedDisciplina((prev) => ({
+                            ...prev,
+                            disciplina: {
+                              ...prev.disciplina,
+                              necessitaLaboratiorio: e.target.checked,
+                            },
+                          }))
                         }
                       />
                     </div>
@@ -1092,14 +1105,15 @@ export default function AlocarTurmaSala() {
                       <Input
                         id="lousa"
                         type="checkbox"
-                        checked={
-                          selectedDisciplina?.necessitaLoucaDigital || false
-                        }
+                        checked={selectedDisciplina?.disciplina?.necessitaLousaDigital || false}
                         onChange={(e) =>
-                          setSelectedDisciplina({
-                            ...selectedDisciplina,
-                            necessitaLoucaDigital: e.target.checked,
-                          })
+                          setSelectedDisciplina((prev) => ({
+                            ...prev,
+                            disciplina: {
+                              ...prev.disciplina,
+                              necessitaLousaDigital: e.target.checked,
+                            },
+                          }))
                         }
                       />
                     </div>
@@ -1110,14 +1124,15 @@ export default function AlocarTurmaSala() {
                       <Input
                         id="ar"
                         type="checkbox"
-                        checked={
-                          selectedDisciplina?.necessitaArCondicionado || false
-                        }
+                        checked={selectedDisciplina?.disciplina?.necessitaArCondicionado || false}
                         onChange={(e) =>
-                          setSelectedDisciplina({
-                            ...selectedDisciplina,
-                            necessitaArCondicionado: e.target.checked,
-                          })
+                          setSelectedDisciplina((prev) => ({
+                            ...prev,
+                            disciplina: {
+                              ...prev.disciplina,
+                              necessitaArCondicionado: e.target.checked,
+                            },
+                          }))
                         }
                       />
                     </div>

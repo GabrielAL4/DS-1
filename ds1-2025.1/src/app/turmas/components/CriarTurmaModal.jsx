@@ -143,12 +143,14 @@ export default function CriarTurmaModal({ setTabela }) {
           return {
             id: turma.id || 0,
             professor: turma.professor || "Não informado",
-            disciplina: turma.disciplina?.nome || turma.disciplina || "Sem Nome",
+            // Mantém disciplina como objeto completo para consistência
+            disciplina: turma.disciplina || null,
             quantidadeAlunos: turma.quantidadeAlunos || 0,
             codigoHorario: turma.codigoHorario || 0,
-            necessitaLaboratorio: turma.disciplina?.necessitaLaboratorio || false,
+            // Usa os nomes corretos do backend dentro de disciplina
+            necessitaLaboratorio: turma.disciplina?.necessitaLaboratiorio || false,
             necessitaArCondicionado: turma.disciplina?.necessitaArCondicionado || false,
-            necessitaLoucaDigital: turma.disciplina?.necessitaLoucaDigital || false,
+            necessitaLoucaDigital: turma.disciplina?.necessitaLousaDigital || false,
             disciplinaId: turma.disciplina?.id || 0,
             alocada: turma.alocada || false,
             salaSelecionada: turma.salaSelecionada || null,
@@ -158,7 +160,7 @@ export default function CriarTurmaModal({ setTabela }) {
           return {
             id: 0,
             professor: "Erro",
-            disciplina: "Erro",
+            disciplina: null,
             quantidadeAlunos: 0,
             codigoHorario: 0,
             necessitaLaboratorio: false,
