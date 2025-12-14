@@ -167,9 +167,6 @@ export default function AlocarTurmaSala() {
       1: "TEMPO1",
       2: "TEMPO2",
       3: "TEMPO3",
-      4: "TEMPO4",
-      5: "TEMPO5",
-      6: "TEMPO6",
     };
 
     console.log('essa disgraça', selectedTurma, selectedSala);
@@ -212,9 +209,6 @@ export default function AlocarTurmaSala() {
         1: "TEMPO1",
         2: "TEMPO2",
         3: "TEMPO3",
-        4: "TEMPO4",
-        5: "TEMPO5",
-        6: "TEMPO6",
       };
 
       const salasDisponiveisPorHorario = await Promise.all(
@@ -276,9 +270,6 @@ export default function AlocarTurmaSala() {
         1: "TEMPO1",
         2: "TEMPO2",
         3: "TEMPO3",
-        4: "TEMPO4",
-        3: "TEMPO5",
-        4: "TEMPO6",
       };
 
       for (const horario of horarios) {

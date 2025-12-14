@@ -69,9 +69,6 @@ export default function CriarTurmaModal({ setTabela }) {
       TEMPO1: 1,
       TEMPO2: 2,
       TEMPO3: 3,
-      TEMPO4: 4,
-      TEMPO5: 5,
-      TEMPO6: 6
     };
 
     const turmaDuplicada = responseTodasTurmas.data?.some(turma => {
@@ -263,9 +260,6 @@ export default function CriarTurmaModal({ setTabela }) {
                 <option value="TEMPO1">1º Horário</option>
                 <option value="TEMPO2">2º Horário</option>
                 <option value="TEMPO3">3º Horário</option>
-                <option value="TEMPO4">4º Horário</option>
-                <option value="TEMPO5">5º Horário</option>
-                <option value="TEMPO6">6º Horário</option>
               </select>
             </div>
 
