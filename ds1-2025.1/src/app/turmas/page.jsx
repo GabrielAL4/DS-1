@@ -359,10 +359,10 @@ export default function AlocarTurmaSala() {
   //mapeamento que relaciona cada dia da semana aos códigos de horário
   const dayToCodeMapping = {
     1: [1, 1, 2], // Segunda
-    2: [2, 1, 3], // Terça
-    3: [4, 4, 3], // Quarta
-    4: [5, 4, 6], // Quinta
-    5: [6, 5], // Sexta
+    2: [1, 2, 3], // Terça
+    3: [1, 1, 2], // Quarta
+    4: [1, 2, 3], // Quinta
+    5: [1, 2], // Sexta
   };
 
   const HorarioDiaTurma = {
