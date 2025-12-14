@@ -22,9 +22,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 // import { ClassService } from "@/services/ClassService";
+import { DisciplinaService } from "@/services/DisciplinaService";
 import { SalaService } from "@/services/SalaService";
 import { TurmaService } from "@/services/TurmaService";
-import { DisciplinaService } from "@/services/DisciplinaService";
 import { Eye, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import CriarDisciplinaModal from "./components/CriarDisciplinaModal";
@@ -365,7 +365,6 @@ export default function AlocarTurmaSala() {
     }
   };
 
-
   //mapeamento que relaciona cada dia da semana aos códigos de horário
   const dayToCodeMapping = {
     1: [1, 1, 2], // Segunda
@@ -386,11 +385,18 @@ export default function AlocarTurmaSala() {
   //lógica de filtragem para considerar esse mapeamento
   const filteredTable = Array.isArray(tabela) ? tabela.filter((row) => {
     // Lógica de filtragem de texto
-    const matchesText = Object.values(row).some(
-      (value) =>
-        value !== null && value !== undefined &&
-        value.toString().toLowerCase().includes(filterValue.toLowerCase())
-    );
+    const matchesText =
+      filterValue === "" ||
+      [
+        row.professor,
+        row.codigoHorario?.toString(),
+        row.quantidadeAlunos?.toString(),
+        row.disciplina?.nome,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          value.toLowerCase().includes(filterValue.toLowerCase())
+        );
 
     // Lógica de filtragem com base no dia
     const matchesDay = filterDia
@@ -406,9 +412,7 @@ export default function AlocarTurmaSala() {
     return matchesText && matchesDay && matchesTime;
   }) : [];
 
-
   const gerarLinhasTabelaPDF = (dados, diaPDF) => {
-
 
     const diaFiltrado = diaSemanaMap[diaPDF];
 
@@ -613,7 +617,7 @@ export default function AlocarTurmaSala() {
     }
   };
   //teste para remover alocação
-  const handleRemoverAlocacao = async (id) => { 
+  const handleRemoverAlocacao = async (id) => {
     try {
       await TurmaService.deleteAlocacaoTurma(id);
       alert("Alocação removida com sucesso!");
@@ -627,7 +631,7 @@ export default function AlocarTurmaSala() {
   const handleDeletarAlocacao = async (turmaId) => {
     try {
       console.log("Buscando alocações para turma ID:", turmaId);
-      
+
       // Busca todas as alocações e filtra pela turma
       const alocacoesResponse = await TurmaService.getAllAlocacoes();
       const todasAlocacoes = alocacoesResponse.data || [];
