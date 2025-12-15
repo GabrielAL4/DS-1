@@ -34,6 +34,7 @@ import ImportarTurmasExcelModal from "./components/ImportarTurmasExcelModal";
 
 export default function AlocarTurmaSala() {
   const [tabela, setTabela] = useState([]);
+  const [salasSelecionadas, setSalasSelecionadas] = useState({});
   const [filterDia, setFilterDia] = useState(0);
   const [filterHora, setFilterHora] = useState(0);
   const [filterValue, setFilterValue] = useState("");
@@ -88,6 +89,24 @@ export default function AlocarTurmaSala() {
   //Atualiza tabela
   const [loading, setLoading] = useState(false);
   // Mapeamento de horários compartilhado
+  const diaSemanaMap = {
+    1: "MONDAY",
+    2: "TUESDAY",
+    3: "WEDNESDAY",
+    4: "THURSDAY",
+    5: "FRIDAY"
+  };
+
+
+  const tempoMap = {
+    1: "TEMPO1",
+    2: "TEMPO2",
+    3: "TEMPO3",
+    4: "TEMPO4",
+    5: "TEMPO5",
+    6: "TEMPO6",
+  };
+
   const horarioMapping = {
     1: [
       { diaSemana: 1, tempoAula: "TEMPO1" },
@@ -156,21 +175,7 @@ export default function AlocarTurmaSala() {
 
   const handleAlocarTurmaSala = async () => {
     // Mapas para enums do Java
-    const diaSemanaMap = {
-      1: "MONDAY",
-      2: "TUESDAY",
-      3: "WEDNESDAY",
-      4: "THURSDAY",
-      5: "FRIDAY"
-    };
-    const tempoMap = {
-      1: "TEMPO1",
-      2: "TEMPO2",
-      3: "TEMPO3",
-      4: "TEMPO4",
-      5: "TEMPO5",
-      6: "TEMPO6",
-    };
+
 
     console.log('essa disgraça', selectedTurma, selectedSala);
 
@@ -189,43 +194,40 @@ export default function AlocarTurmaSala() {
       })
   }
 
-  const diaSemanaMap = {
-    1: "MONDAY",
-    2: "TUESDAY",
-    3: "WEDNESDAY",
-    4: "THURSDAY",
-    5: "FRIDAY"
-  };
+
 
   //Busca salas disponíveis para determinada disciplina
   const handleBuscarSalasDisponiveis = async (turma) => {
     try {
+      // alert(JSON.stringify(turma, null, 2));
       const horarios = horarioMapping[turma.codigoHorario];
-      if (!horarios) {
+
+      if (!horarios || horarios.length === 0) {
         alert("Horário inválido para a turma.");
         return;
       }
 
-      // Mapas para enums do Java
+      const primeiroHorario = horarios[0];
 
-      const tempoMap = {
-        1: "TEMPO1",
-        2: "TEMPO2",
-        3: "TEMPO3",
-        4: "TEMPO4",
-        5: "TEMPO5",
-        6: "TEMPO6",
-      };
+      if (!primeiroHorario) {
+        console.warn("Nenhum horário encontrado");
+        return;
+      }
 
-      const salasDisponiveisPorHorario = await Promise.all(
-        horarios.map(async (horario) => {
-          const response = await SalaService.getAllSalasDisponiveis(
-            diaSemanaMap[horario.diaSemana],
-            horario.tempoAula //tempoMap[horario.tempoAula]
-          );
-          return response.data || [];
-        })
+      const diaSemanaString = diaSemanaMap[primeiroHorario.diaSemana];
+      const tempo = primeiroHorario.tempoAula;
+
+      if (!diaSemanaString || !tempo) {
+        console.warn("Dia ou tempo inválido", primeiroHorario);
+        return;
+      }
+
+      const response = await SalaService.getAllSalasDisponiveis(
+        diaSemanaString,
+        tempo
       );
+
+      const salasDisponiveisPorHorario = response.data || [];
 
       // Combina todas as salas disponíveis e remove duplicatas
       const salasCombinadas = salasDisponiveisPorHorario.flat();
@@ -252,7 +254,10 @@ export default function AlocarTurmaSala() {
   //salva a alocação de sala disponivel da disciplina
   const handleSalvarAlocacao = async (turma) => {
     try {
-      if (!selectedSala) {
+      // 🔹 pega a sala selecionada da linha da turma
+      const salaSelecionada = salasSelecionadas[turma.id];
+
+      if (!salaSelecionada) {
         alert("Por favor, selecione uma sala.");
         return;
       }
@@ -263,45 +268,36 @@ export default function AlocarTurmaSala() {
         return;
       }
 
-      // Mapas para enums do Java
       const diaSemanaMap = {
         1: "MONDAY",
         2: "TUESDAY",
         3: "WEDNESDAY",
         4: "THURSDAY",
-        5: "FRIDAY"
-      };
-
-      const tempoMap = {
-        1: "TEMPO1",
-        2: "TEMPO2",
-        3: "TEMPO3",
-        4: "TEMPO4",
-        3: "TEMPO5",
-        4: "TEMPO6",
+        5: "FRIDAY",
       };
 
       for (const horario of horarios) {
         const payload = {
           idTurma: turma.id,
-          idSala: selectedSala.id,
+          idSala: salaSelecionada.id, // ✅ agora vem da linha correta
           diaSemana: diaSemanaMap[horario.diaSemana],
-          tempo: horario.tempoAula//tempoMap[horario.tempoAula],
+          tempo: horario.tempoAula,
         };
 
-        console.log('bora', selectedSala.id, turma.id)
+        console.log("Salvando alocação:", payload);
 
         await TurmaService.createAlocacaoTurma(payload);
-        await getTurmasData();
       }
 
-      // Atualiza o estado local da tabela para refletir a mudança
+      await getTurmasData();
+
+      // Atualiza tabela local
       const updatedTabela = tabela.map((row) => {
         if (row.id === turma.id) {
           return {
             ...row,
             alocada: true,
-            salaSelecionada: selectedSala.id,
+            salaSelecionada: salaSelecionada.id,
           };
         }
         return row;
@@ -309,16 +305,7 @@ export default function AlocarTurmaSala() {
 
       setTabela(updatedTabela);
 
-      // Limpa a seleção de sala
-      setSelectedSala(null);
-
-      // Mostra mensagem de sucesso
       alert("Turma alocada com sucesso!");
-
-      // Recarrega os dados após um pequeno delay para garantir que o backend processou
-      setTimeout(() => {
-        getTurmasData();
-      }, 1000);
     } catch (error) {
       console.error("Erro ao salvar alocação:", error);
       alert("Erro ao salvar alocação.");
@@ -613,7 +600,7 @@ export default function AlocarTurmaSala() {
     }
   };
   //teste para remover alocação
-  const handleRemoverAlocacao = async (id) => { 
+  const handleRemoverAlocacao = async (id) => {
     try {
       await TurmaService.deleteAlocacaoTurma(id);
       alert("Alocação removida com sucesso!");
@@ -627,7 +614,7 @@ export default function AlocarTurmaSala() {
   const handleDeletarAlocacao = async (turmaId) => {
     try {
       console.log("Buscando alocações para turma ID:", turmaId);
-      
+
       // Busca todas as alocações e filtra pela turma
       const alocacoesResponse = await TurmaService.getAllAlocacoes();
       const todasAlocacoes = alocacoesResponse.data || [];
@@ -885,28 +872,29 @@ export default function AlocarTurmaSala() {
                             ) : (
                               <select
                                 className="rounded-md border p-2"
-                                value={selectedSala?.id || ""}
-                                onClick={() =>
-                                  handleBuscarSalasDisponiveis(row)
-                                }
+                                value={salasSelecionadas[row.id]?.id || ""}
+                                onClick={() => handleBuscarSalasDisponiveis(row)}
                                 onChange={(e) => {
-                                  const selected = salasDisponiveis[
-                                    row.id
-                                  ]?.find(
-                                    (sala) =>
-                                      sala.id === parseInt(e.target.value)
+                                  const salaId = parseInt(e.target.value);
+
+                                  const selected = salasDisponiveis[row.id]?.find(
+                                    (sala) => sala.id === salaId
                                   );
-                                  setSelectedSala(selected);
+
+                                  setSalasSelecionadas((prev) => ({
+                                    ...prev,
+                                    [row.id]: selected,
+                                  }));
                                 }}
                               >
                                 <option value="">Selecione uma sala</option>
                                 {salasDisponiveis[row.id]?.map((sala) => (
                                   <option key={sala.id} value={sala.id}>
-                                    Sala: Bloco {sala.bloco} - Número{" "}
-                                    {sala.numero}
+                                    Sala: Bloco {sala.bloco} - Número {sala.numero}
                                   </option>
                                 ))}
                               </select>
+
                             )}
                           </TableCell>
                           <TableCell>
