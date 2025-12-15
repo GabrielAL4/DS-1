@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.DayOfWeek;
 import java.util.List;
@@ -154,5 +155,51 @@ public class TurmaController {
          }
          List<Turma> turmas = turmaService.getTurmasByDisciplina(disciplina);
          return new ResponseEntity<>(turmas, HttpStatus.OK);
+    }
+
+    @PostMapping("/importar-excel")
+    public ResponseEntity<?> importarTurmasExcel(@RequestParam("file") MultipartFile file) {
+        System.out.println("========================================");
+        System.out.println("=== ENDPOINT CHAMADO: /importar-excel ===");
+        System.out.println("========================================");
+        
+        try {
+            System.out.println("=== RECEBENDO ARQUIVO NO CONTROLLER ===");
+            
+            if (file == null) {
+                System.err.println("Arquivo é NULL!");
+                return new ResponseEntity<>("Arquivo não recebido", HttpStatus.BAD_REQUEST);
+            }
+            
+            System.out.println("Nome: " + file.getOriginalFilename());
+            System.out.println("Tamanho: " + file.getSize());
+            System.out.println("Content Type: " + file.getContentType());
+            System.out.println("IsEmpty: " + file.isEmpty());
+            
+            if (file.isEmpty()) {
+                System.err.println("Arquivo vazio!");
+                return new ResponseEntity<>("Arquivo vazio", HttpStatus.BAD_REQUEST);
+            }
+            
+            String filename = file.getOriginalFilename();
+            if (filename == null || (!filename.toLowerCase().endsWith(".xlsx") && !filename.toLowerCase().endsWith(".xls"))) {
+                System.err.println("Formato de arquivo inválido: " + filename);
+                return new ResponseEntity<>("Formato de arquivo inválido. Use .xlsx ou .xls", HttpStatus.BAD_REQUEST);
+            }
+            
+            System.out.println("Chamando turmaService.importarTurmasDoExcel...");
+            List<Turma> turmasCriadas = turmaService.importarTurmasDoExcel(file);
+            String mensagem = "Importadas " + turmasCriadas.size() + " turmas com sucesso";
+            System.out.println("=== SUCESSO ===");
+            System.out.println(mensagem);
+            System.out.println("========================================");
+            return new ResponseEntity<>(mensagem, HttpStatus.OK);
+        } catch (Exception e) {
+            System.err.println("=== ERRO NO CONTROLLER ===");
+            System.err.println("Erro ao importar Excel: " + e.getMessage());
+            e.printStackTrace();
+            System.err.println("========================================");
+            return new ResponseEntity<>("Erro ao importar: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 }

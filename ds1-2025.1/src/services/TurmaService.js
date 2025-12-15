@@ -50,4 +50,16 @@ export class TurmaService {
 
     return response;
   }
+
+  static async importarTurmasExcel(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    console.log('Enviando arquivo:', file.name, 'Tamanho:', file.size);
+    
+    // Não definir Content-Type manualmente - o axios detecta automaticamente FormData
+    const response = await httpClient.post('/Turma/importar-excel', formData);
+
+    return response;
+  }
 }

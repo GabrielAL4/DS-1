@@ -12,6 +12,13 @@ httpClient.interceptors.request.use(
   (config) => {
     console.log('Requisição sendo feita:', config.method?.toUpperCase(), config.url);
     console.log('Payload:', config.data);
+    
+    // Se for FormData, remover Content-Type para o browser definir automaticamente com boundary
+    if (config.data instanceof FormData) {
+      console.log('FormData detectado, removendo Content-Type header');
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => {

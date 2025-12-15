@@ -29,8 +29,8 @@ import * as XLSX from 'xlsx';
 
 export default function AlocarTurmaSala() {
   const [tabela, setTabela] = useState([]);
-  const [filterDia, setFilterDia] = useState(0);
-  const [filterHora, setFilterHora] = useState(0);
+  const [filterDia, setFilterDia] = useState("");
+  const [filterHora, setFilterHora] = useState("");
   const [filterValue, setFilterValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogOpen2, setDialogOpen2] = useState(false);
@@ -104,15 +104,25 @@ export default function AlocarTurmaSala() {
         return;
       }
 
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      // const response = await SalaService.createRelatorioFinal(formData);
-      console.log("Arquivo selecionado:", selectedFile.name);
+      console.log("Iniciando importação do arquivo:", selectedFile.name);
+      const response = await TurmaService.importarTurmasExcel(selectedFile);
+      console.log("Resposta da importação:", response);
+      
+      const mensagem = response.data || "Turmas importadas com sucesso!";
+      alert(mensagem);
+      
       setDialogImportarExcel(false);
       setSelectedFile(null);
-      // getTurmasData(); // Atualiza a tabela após upload
+      
+      // Aguarda um pouco para garantir que o backend terminou de processar
+      console.log("Aguardando 2 segundos antes de atualizar a lista...");
+      setTimeout(() => {
+        console.log("Atualizando lista de turmas...");
+        getTurmasData(); // Atualiza a tabela após upload
+      }, 2000);
     } catch (error) {
       console.error("Erro ao enviar o arquivo:", error);
+      alert("Erro ao importar arquivo: " + (error.response?.data || error.message));
     }
   };
 
@@ -169,30 +179,21 @@ export default function AlocarTurmaSala() {
       const response = await TurmaService.getAllTurmas();
       console.log('Resposta do TurmaService.getAllTurmas():', response);
       const turmas = response.data || [];
-      console.log('Turmas recebidas:', turmas);
+      console.log(`Total de turmas recebidas do backend: ${turmas.length}`);
 
-      const turmasComAlocacoes = await Promise.all(
-        turmas.map(async (turma) => {
-          try {
-            const alocacoesResponse = await TurmaService.getTurmaById(turma.id);
-            const alocacoes = alocacoesResponse.data.alocacoes || [];
-            const alocacaoAtual = alocacoes[0]; // Considera a primeira alocação, se existir
+      // As turmas já vêm com alocacoes do backend (findAllWithAlocacoes)
+      const turmasComAlocacoes = turmas.map((turma) => {
+        const alocacoes = turma.alocacoes || [];
+        const alocacaoAtual = alocacoes[0]; // Considera a primeira alocação, se existir
 
-            return {
-              ...turma,
-              alocada: !!alocacaoAtual,
-              salaSelecionada: alocacaoAtual ? alocacaoAtual.salaId : null,
-            };
-          } catch (error) {
-            console.error(`Erro ao buscar alocações da turma ${turma.id}:`, error);
-            return {
-              ...turma,
-              alocada: false,
-              salaSelecionada: null,
-            };
-          }
-        })
-      );
+        return {
+          ...turma,
+          alocada: !!alocacaoAtual,
+          salaSelecionada: alocacaoAtual ? (alocacaoAtual.sala?.id || alocacaoAtual.salaId) : null,
+        };
+      });
+      
+      console.log(`Total de turmas processadas: ${turmasComAlocacoes.length}`);
 
       const mapResponse = turmasComAlocacoes.map((turma) => {
         try {
@@ -227,7 +228,9 @@ export default function AlocarTurmaSala() {
         }
       });
 
+      console.log(`Total de turmas mapeadas para a tabela: ${mapResponse.length}`);
       setTabela(mapResponse); // Atualiza os dados da tabela
+      console.log('Tabela atualizada com', mapResponse.length, 'turmas');
     } catch (error) {
       console.error("Erro ao carregar turmas:", error);
       setTabela([]);
@@ -617,25 +620,33 @@ export default function AlocarTurmaSala() {
   //lógica de filtragem para considerar esse mapeamento
   const filteredTable = Array.isArray(tabela) ? tabela.filter((row) => {
     // Lógica de filtragem de texto
-    const matchesText = Object.values(row).some(
+    const matchesText = !filterValue || filterValue.trim() === "" || Object.values(row).some(
       (value) =>
         value !== null && value !== undefined &&
         value.toString().toLowerCase().includes(filterValue.toLowerCase())
     );
 
     // Lógica de filtragem com base no dia
-    const matchesDay = filterDia
-      ? dayToCodeMapping[filterDia]?.includes(row.codigoHorario)
-      : true;
+    const matchesDay = !filterDia || filterDia === "" || filterDia === "0" || filterDia === 0
+      ? true
+      : dayToCodeMapping[filterDia]?.includes(row.codigoHorario);
 
     // Lógica de filtragem com base no dia e horário
     const matchesTime =
-      filterDia && filterHora
-        ? row.codigoHorario === dayToCodeMapping[filterDia]?.[filterHora - 1]
-        : true;
+      !filterDia || filterDia === "" || filterDia === "0" || filterDia === 0 || 
+      !filterHora || filterHora === "" || filterHora === "0" || filterHora === 0
+        ? true
+        : row.codigoHorario === dayToCodeMapping[filterDia]?.[filterHora - 1];
 
     return matchesText && matchesDay && matchesTime;
   }) : [];
+  
+  // Log para debug - sempre mostrar quando a tabela é atualizada
+  console.log(`📊 Estado da tabela: Total=${tabela?.length || 0}, Filtradas=${filteredTable.length}`);
+  console.log(`🔍 Filtros: Dia="${filterDia}", Hora="${filterHora}", Texto="${filterValue}"`);
+  if (filteredTable.length !== tabela?.length && tabela?.length > 0) {
+    console.log(`⚠️ Filtros estão ativos! Mostrando ${filteredTable.length} de ${tabela.length} turmas`);
+  }
 
   //Função para abrir o diálogo de edição
   const handleEditPreferences = async (turma) => {
@@ -813,18 +824,38 @@ export default function AlocarTurmaSala() {
                   placeholder="Filtrar"
                   className="border border-black"
                   value={filterValue}
-                  onChange={(e) => setFilterValue(e.target.value)}
+                  onChange={(e) => {
+                    setFilterValue(e.target.value);
+                    console.log("Filtro texto alterado para:", e.target.value);
+                  }}
                 />
+                {(filterDia || filterHora || filterValue) && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setFilterDia("");
+                      setFilterHora("");
+                      setFilterValue("");
+                      console.log("Filtros limpos!");
+                    }}
+                  >
+                    Limpar Filtros
+                  </Button>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
                 <Label htmlFor="dia" className="text-right">
                   Dia da Semana:
                 </Label>
-                <select
+                  <select
                   className="rounded-md border p-2 col-span-3 w-[150px]"
-                  value={filterDia}
-                  onChange={(e) => setFilterDia(e.target.value)}
+                  value={filterDia || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFilterDia(value);
+                    console.log("Filtro Dia alterado para:", value);
+                  }}
                 >
                   <option value="">Selecione uma opção</option>
                   <option value="1">Segunda-Feira</option>
@@ -841,13 +872,14 @@ export default function AlocarTurmaSala() {
                 </Label>
                 <select
                   className="rounded-md border p-2 col-span-3 w-[150px]"
-                  value={filterHora}
+                  value={filterHora || ""}
                   onChange={(e) => {
                     const value = e.target.value;
-                    setFilterHora(value ? parseInt(value) : 0); // Define o horário ou reseta para 0
+                    setFilterHora(value);
+                    console.log("Filtro Hora alterado para:", value);
                   }}
                 >
-                  <option>Selecione uma opção</option>
+                  <option value="">Selecione uma opção</option>
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>

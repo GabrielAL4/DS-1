@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
@@ -32,14 +31,9 @@ public class Disciplina {
     @Column(name = "lousa_digital")
     private boolean necessitaLousaDigital;
 
-    @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "disciplina", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
-    private List<AlocacaoSala> alocacoes;
-
-    @ManyToOne
-    @JoinColumn(name = "id_turma")
-    @JsonBackReference
-    private Turma turma;
+    private List<Turma> turmas;
 
     public int getId() {
         return id;
@@ -78,6 +72,14 @@ public class Disciplina {
 
     public void setNecessitaLousaDigital(@NotNull(message = "informação sobre lousa é obrigatória") boolean necessitaLousaDigital) {
         this.necessitaLousaDigital = necessitaLousaDigital;
+    }
+
+    public List<Turma> getTurmas() {
+        return turmas;
+    }
+
+    public void setTurmas(List<Turma> turmas) {
+        this.turmas = turmas;
     }
 
     @Override
