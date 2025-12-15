@@ -54,6 +54,7 @@ export default function Home() {
           codigoHorario: tabela.codigohorario,
         }));
 
+      alert("Dados importados!");
       setTabelaOriginal(mappedTabela);
       setTabela(mappedTabela);
     };

@@ -22,9 +22,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 // import { ClassService } from "@/services/ClassService";
+import { DisciplinaService } from "@/services/DisciplinaService";
 import { SalaService } from "@/services/SalaService";
 import { TurmaService } from "@/services/TurmaService";
-import { DisciplinaService } from "@/services/DisciplinaService";
 import { Eye, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import CriarDisciplinaModal from "./components/CriarDisciplinaModal";
@@ -209,25 +209,24 @@ export default function AlocarTurmaSala() {
 
       const primeiroHorario = horarios[0];
 
-      if (!primeiroHorario) {
-        console.warn("Nenhum horário encontrado");
-        return;
-      }
+      const tempoMap = {
+        1: "TEMPO1",
+        2: "TEMPO2",
+        3: "TEMPO3",
+        4: "TEMPO4",
+        5: "TEMPO5",
+        6: "TEMPO6",
+      };
 
-      const diaSemanaString = diaSemanaMap[primeiroHorario.diaSemana];
-      const tempo = primeiroHorario.tempoAula;
-
-      if (!diaSemanaString || !tempo) {
-        console.warn("Dia ou tempo inválido", primeiroHorario);
-        return;
-      }
-
-      const response = await SalaService.getAllSalasDisponiveis(
-        diaSemanaString,
-        tempo
+      const salasDisponiveisPorHorario = await Promise.all(
+        horarios.map(async (horario) => {
+          const response = await SalaService.getAllSalasDisponiveis(
+            diaSemanaMap[horario.diaSemana],
+            horario.tempoAula //tempoMap[horario.tempoAula]
+          );
+          return response.data || [];
+        })
       );
-
-      const salasDisponiveisPorHorario = response.data || [];
 
       // Combina todas as salas disponíveis e remove duplicatas
       const salasCombinadas = salasDisponiveisPorHorario.flat();
@@ -273,7 +272,16 @@ export default function AlocarTurmaSala() {
         2: "TUESDAY",
         3: "WEDNESDAY",
         4: "THURSDAY",
-        5: "FRIDAY",
+        5: "FRIDAY"
+      };
+
+      const tempoMap = {
+        1: "TEMPO1",
+        2: "TEMPO2",
+        3: "TEMPO3",
+        4: "TEMPO4",
+        3: "TEMPO5",
+        4: "TEMPO6",
       };
 
       for (const horario of horarios) {
@@ -352,14 +360,13 @@ export default function AlocarTurmaSala() {
     }
   };
 
-
   //mapeamento que relaciona cada dia da semana aos códigos de horário
   const dayToCodeMapping = {
     1: [1, 1, 2], // Segunda
-    2: [2, 1, 3], // Terça
-    3: [4, 4, 3], // Quarta
-    4: [5, 4, 6], // Quinta
-    5: [6, 5], // Sexta
+    2: [1, 2, 3], // Terça
+    3: [1, 1, 2], // Quarta
+    4: [1, 2, 3], // Quinta
+    5: [1, 2], // Sexta
   };
 
   const HorarioDiaTurma = {
@@ -373,11 +380,18 @@ export default function AlocarTurmaSala() {
   //lógica de filtragem para considerar esse mapeamento
   const filteredTable = Array.isArray(tabela) ? tabela.filter((row) => {
     // Lógica de filtragem de texto
-    const matchesText = Object.values(row).some(
-      (value) =>
-        value !== null && value !== undefined &&
-        value.toString().toLowerCase().includes(filterValue.toLowerCase())
-    );
+    const matchesText =
+      filterValue === "" ||
+      [
+        row.professor,
+        row.codigoHorario?.toString(),
+        row.quantidadeAlunos?.toString(),
+        row.disciplina?.nome,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          value.toLowerCase().includes(filterValue.toLowerCase())
+        );
 
     // Lógica de filtragem com base no dia
     const matchesDay = filterDia
@@ -393,9 +407,7 @@ export default function AlocarTurmaSala() {
     return matchesText && matchesDay && matchesTime;
   }) : [];
 
-
   const gerarLinhasTabelaPDF = (dados, diaPDF) => {
-
 
     const diaFiltrado = diaSemanaMap[diaPDF];
 
@@ -757,9 +769,6 @@ export default function AlocarTurmaSala() {
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
                 </select>
                 <div className="flex items-center gap-2 flex-wrap">
                   <CriarTurmaModal setTabela={setTabela} />

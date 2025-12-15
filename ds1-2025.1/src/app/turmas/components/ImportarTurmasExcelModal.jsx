@@ -30,8 +30,8 @@ export default function ImportarTurmasExcelModal() {
           codigohorario: tabela.codigohorario == null || tabela.codigohorario == "" ? 0 : tabela.codigohorario
         }));
 
+      alert("Dados importados!");
       setExcelTurma(mappedExcelTurma);
-      
     };
   }
 
