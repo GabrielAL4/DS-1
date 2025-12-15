@@ -63,6 +63,8 @@ export default function CadastrarSala() {
       //("Resposta do servidor:", response);
       setTabela((prevTable) => [...prevTable, response.data]);
 
+      alert("Disciplina cadastrada com sucesso!");
+
       setArCondicionado(null);
       setLousaDigital(null);
       setLaboratorio(null);
