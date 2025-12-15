@@ -1,6 +1,7 @@
 package br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Repositories;
 
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.AlocacaoSala;
+import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Enums.TempoSala;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,4 +11,5 @@ import java.util.List;
 @Repository
 public interface AlocacaoSalaRepository extends JpaRepository<AlocacaoSala, Integer> {
     List<AlocacaoSala> findByDiaSemana(DayOfWeek diaSemana);
+    List<AlocacaoSala> findByDiaSemanaAndTempo(DayOfWeek diaSemana, TempoSala tempo);
 }

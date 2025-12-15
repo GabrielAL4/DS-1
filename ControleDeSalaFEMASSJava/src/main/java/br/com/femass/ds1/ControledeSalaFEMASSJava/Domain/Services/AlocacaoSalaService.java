@@ -1,13 +1,16 @@
 package br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Services;
 
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.AlocacaoSala;
+import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Entities.Enums.TempoSala;
 import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Repositories.AlocacaoSalaRepository;
+import br.com.femass.ds1.ControledeSalaFEMASSJava.Domain.Repositories.SalaRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,7 +21,7 @@ public class AlocacaoSalaService {
     private AlocacaoSalaRepository alocacaoSalaRepository;
 
     @Autowired
-    private SalaService salaService;
+    private SalaRepository salaRepository;
 
     @Autowired
     private TurmaService turmaService;
@@ -40,7 +43,7 @@ public class AlocacaoSalaService {
         AlocacaoSala existingAlocacao = alocacaoSalaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alocacao não encontrada com o ID: " + id));
         // You might want to add validation to ensure the associated Sala and Turma exist
-        if (updatedAlocacao.getSala() != null && salaService.getSalaById(updatedAlocacao.getSala().getId()).isEmpty()) {
+        if (updatedAlocacao.getSala() != null && salaRepository.findById(updatedAlocacao.getSala().getId()).isEmpty()) {
             throw new IllegalArgumentException("Sala com o ID " + updatedAlocacao.getSala().getId() + " não encontrada.");
         }
         if (updatedAlocacao.getTurma() != null && turmaService.getTurmaById(updatedAlocacao.getTurma().getId()).isEmpty()) {
@@ -56,5 +59,9 @@ public class AlocacaoSalaService {
 
     public void deleteAlocacao(int id) {
         alocacaoSalaRepository.deleteById(id);
+    }
+
+    public List<AlocacaoSala>  getAlocacoesByDiaSemanaAndTempo(DayOfWeek diaSemana, TempoSala tempo) {
+        return alocacaoSalaRepository.findByDiaSemanaAndTempo(diaSemana, tempo);
     }
 }
