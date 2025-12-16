@@ -266,6 +266,18 @@ export default function AlocarTurmaSala() {
         alert("Horário inválido para a turma.");
         return;
       }
+      const response = await SalaService.getSalaById(salaSelecionada.id);
+      const salaobj = response.data || null;
+      if (salaobj == null){
+        alert("Erro ao alocar, sala não encontrada!")
+        return
+      }
+     
+      if (turma.quantidadeAlunos > salaobj.capacidadeMaxima){
+         if (!confirm("A sala escolhida possue uma capacidade inferior, deseja alocar mesmo assim?")){
+            return
+         };
+      }
 
       const diaSemanaMap = {
         1: "MONDAY",
