@@ -274,7 +274,7 @@ export default function AlocarTurmaSala() {
       }
      
       if (turma.quantidadeAlunos > salaobj.capacidadeMaxima){
-         if (!confirm("A sala escolhida possue uma capacidade inferior, deseja alocar mesmo assim?")){
+         if (!confirm("A sala selecionada comporta menos pessoas do que o necessário. Deseja alocar mesmo assim?")){
             return
          };
       }
