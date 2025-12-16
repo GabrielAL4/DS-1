@@ -1,3 +1,4 @@
+
 "use client";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { IndisponibilidadeService } from "@/services/IndisponibilidadeService";
 import { SalaService } from "@/services/SalaService";
 import { Eye, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -113,15 +113,21 @@ export default function CadastrarSala() {
     }
   };
 
+  const isDuplicataIndisponibilidade = (item) => {
+    const selectedId = parseInt(selectedSalaId, 10);
+
+    return (
+      item.sala.id === selectedId &&
+      item.diaSemana === selectedDiaSemana &&
+      item.tempo === selectedHorario
+    );
+  };
+
   const handleSubmitUnavailable = async (event) => {
     event.preventDefault();
 
     // Verificar se já existe uma indisponibilidade com o mesmo dia e horário
-    const duplicada = indisponibilidades.some(
-      (indisponibilidade) =>
-        indisponibilidade.diaSemana === selectedDiaSemana &&
-        indisponibilidade.tempo === selectedHorario
-    );
+    const duplicada = indisponibilidades.some(isDuplicataIndisponibilidade);
 
     if (duplicada) {
       alert("Essa indisponibilidade já está registrada para a sala selecionada");
@@ -176,29 +182,63 @@ export default function CadastrarSala() {
       .finally(() => setIsDialogEditOpen(false));
   };
 
-  //Função para Buscar Indisponibilidades
-  const fetchIndisponibilidades = async () => {
-    IndisponibilidadeService.getAllIndisponibilidades()
-      .then((response) => {
-        //console.log('chama indisponibilidades', response);
-        // Atualiza o estado com as indisponibilidades
-        setIndisponibilidades(response.data || []);
-        setIsIndisponibilidadeListOpen(true); // Abre o modal
-      })
-      .catch((error) => {
-        alert("Indisponibilidades não encontradas.");
-        console.error("Erro ao encontrar sala com indisponibilidade:", error);
-      });
+  // NOVO BLOCO: Sincroniza as indisponibilidades com a sala selecionada no modal de cadastro.
+  useEffect(() => {
+    // 1. Converte o ID selecionado para número (o valor do select é string)
+    const idNumerico = parseInt(selectedSalaId, 10);
+
+    // 2. Só carrega se o ID for válido (maior que zero)
+    if (idNumerico > 0) {
+      // Chamamos a função de busca, mas SEM abrir o modal de visualização.
+      // Se a função fetchIndisponibilidades abre o modal (linha 161),
+      // precisamos de uma versão que só carrega o estado.
+      fetchIndisponibilidadesParaValidacao(idNumerico);
+    } else {
+      // Se o select for "Selecione o número da sala" (null ou 0), limpa o estado
+      setIndisponibilidades([]);
+    }
+  }, [selectedSalaId]);
+
+  // NOVA FUNÇÃO: Apenas carrega os dados para o state, sem abrir o modal de visualização.
+  const fetchIndisponibilidadesParaValidacao = async (salaId) => {
+    try {
+      const response = await SalaService.getSalaComIndisponibilidades(salaId);
+      const data = response.data;
+
+      // Atualiza o estado indisponibilidades (usado na validação)
+      setIndisponibilidades(Array.isArray(data) ? data : [data]);
+
+    } catch (error) {
+      console.error("Erro ao carregar indisponibilidade para validação:", error);
+      setIndisponibilidades([]); // Limpa em caso de erro
+    }
+  };
+
+  // Mantenha sua função original para o botão <Eye />:
+  const fetchIndisponibilidades = async (selectedSalaId) => {
+    setIsIndisponibilidadeListOpen(true); // Abre o modal de visualização
+
+    try {
+      const response = await SalaService.getSalaComIndisponibilidades(selectedSalaId);
+      const data = response.data;
+
+      // Converte objeto único em array
+      setIndisponibilidades(Array.isArray(data) ? data : [data]);
+
+    } catch (error) {
+      // Captura o erro do Axios (requisição falhou)
+      alert("Indisponibilidades não encontradas.");
+      console.error("Erro ao encontrar sala com indisponibilidade:", error);
+    }
   };
 
   //organiza as indisponibilidades em um formato que facilite a exibição
   const organizeIndisponibilidades = () => {
-    //console.log("Organizando indisponibilidades:", indisponibilidades);
     const tabela = Array(3).fill(null).map(() => Array(5).fill(null)); // 3 horários, 5 dias
 
     indisponibilidades.forEach((indisponibilidade) => {
-      //console.log("Processando indisponibilidade:", indisponibilidade);
 
+      console.log(indisponibilidade)
       // Mapear DayOfWeek para índice (1-5)
       let diaSemanaIndex;
       switch (indisponibilidade.diaSemana) {
@@ -219,11 +259,11 @@ export default function CadastrarSala() {
         default: console.warn("Tempo não reconhecido:", indisponibilidade.tempo); return;
       }
 
-      //console.log(`Marcando posição [${tempoIndex}][${diaSemanaIndex}]`);
+      console.log(tempoIndex, diaSemanaIndex)
+
       tabela[tempoIndex][diaSemanaIndex] = "X"; // Marca o horário indisponível
     });
 
-    // console.log("Tabela organizada:", tabela);
     return tabela;
   };
 
@@ -393,8 +433,13 @@ export default function CadastrarSala() {
                         </Label>
                         <select
                           className="rounded-md border p-2 col-span-3"
-                          value={selectedSalaId}
-                          onChange={(e) => setSelectedSalaId(e.target.value)}
+                          // O valor armazenado é 0 (ou null) ou o ID numérico da sala
+                          value={selectedSalaId || null}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Se o valor for a string do ID, converte para número. Senão, 0 ou null.
+                            setSelectedSalaId(value ? parseInt(value, 10) : 0);
+                          }}
                         >
                           <option value={null}>Selecione o número da sala</option>
                           {tabela
@@ -505,8 +550,6 @@ export default function CadastrarSala() {
                         <Pencil onClick={() => handleEditSala(row)} />
                       </button>
 
-                      {console.log(row)}
-
                       {/* Botão de Excluir */}
                       <DeletarSalaModal
                         row={row}
@@ -587,7 +630,7 @@ export default function CadastrarSala() {
                 className="col-span-3"
                 type="checkbox"
                 checked={editSala.possuiLousaDigital}
-                onChange={(e) => handleEditChange("possuiLoucaDigital", e.target.checked)}
+                onChange={(e) => handleEditChange("possuiLousaDigital", e.target.checked)}
               />
             </div>
           </div>
