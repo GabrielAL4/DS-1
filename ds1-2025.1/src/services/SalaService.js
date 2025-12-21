@@ -22,7 +22,7 @@ export class SalaService {
   }
 
   static async getSalaComIndisponibilidades(id) {
-    const response = httpClient.get(`/Sala/${salaId}/com-indisponibilidades`);
+    const response = httpClient.get(`/Sala/${id}/com-indisponibilidades`);
 
     return response;
   }
