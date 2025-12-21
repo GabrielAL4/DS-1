@@ -207,17 +207,6 @@ export default function AlocarTurmaSala() {
         return;
       }
 
-      const primeiroHorario = horarios[0];
-
-      const tempoMap = {
-        1: "TEMPO1",
-        2: "TEMPO2",
-        3: "TEMPO3",
-        4: "TEMPO4",
-        5: "TEMPO5",
-        6: "TEMPO6",
-      };
-
       const salasDisponiveisPorHorario = await Promise.all(
         horarios.map(async (horario) => {
           const response = await SalaService.getAllSalasDisponiveis(
@@ -268,15 +257,15 @@ export default function AlocarTurmaSala() {
       }
       const response = await SalaService.getSalaById(salaSelecionada.id);
       const salaobj = response.data || null;
-      if (salaobj == null){
+      if (salaobj == null) {
         alert("Erro ao alocar, sala não encontrada!")
         return
       }
-     
-      if (turma.quantidadeAlunos > salaobj.capacidadeMaxima){
-         if (!confirm("A sala selecionada comporta menos pessoas do que o necessário. Deseja alocar mesmo assim?")){
-            return
-         };
+
+      if (turma.quantidadeAlunos > salaobj.capacidadeMaxima) {
+        if (!confirm("A sala selecionada comporta menos pessoas do que o necessário. Deseja alocar mesmo assim?")) {
+          return
+        };
       }
 
       const diaSemanaMap = {
@@ -287,14 +276,7 @@ export default function AlocarTurmaSala() {
         5: "FRIDAY"
       };
 
-      const tempoMap = {
-        1: "TEMPO1",
-        2: "TEMPO2",
-        3: "TEMPO3",
-        4: "TEMPO4",
-        3: "TEMPO5",
-        4: "TEMPO6",
-      };
+
 
       for (const horario of horarios) {
         const payload = {
@@ -667,14 +649,167 @@ export default function AlocarTurmaSala() {
       alert(`Erro ao tentar remover a alocação: ${error.response?.data?.message || error.message}`);
     }
   };
+
+
+  const salaAtendeTurma = (sala, turma) => {
+    // capacidade
+    if (sala.capacidadeMaxima < turma.quantidadeAlunos) {
+      return false;
+    }
+
+    const requisitos = turma.disciplina;
+
+    // laboratório
+    if (requisitos.necessitaLaboratiorio && !sala.possuiLaboratorio) {
+      return false;
+    }
+
+    // ar condicionado
+    if (requisitos.necessitaArCondicionado && !sala.possuiArCondicionado) {
+      return false;
+    }
+
+    // lousa digital
+    if (requisitos.necessitaLousaDigital && !sala.possuiLousaDigital) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const custoSalaParaTurma = (sala, turma) => {
+    let custo = 0;
+    const req = turma.disciplina;
+
+    // capacidade extra (quanto menor, melhor)
+    custo += sala.capacidadeMaxima - turma.quantidadeAlunos;
+
+    // recursos "sobrando"
+    if (sala.possuiLaboratorio && !req.necessitaLaboratiorio) custo += 1000;
+    if (sala.possuiArCondicionado && !req.necessitaArCondicionado) custo += 500;
+    if (sala.possuiLousaDigital && !req.necessitaLousaDigital) custo += 500;
+
+    return custo;
+  };
+
+
+
   //Função para alocar turmas automaticamente
   const handleAlocarAutomaticamente = async () => {
     try {
-      setLoading(true); // Exibe o estado de carregamento
-      // const response = await ClassService.allocateClassAutomatically();
-      alert("Alocação automática realizada com sucesso!");
-      // await getTurmasData(); // Atualiza a tabela
-      // window.location.reload(); // Recarrega a página após salvar
+      setLoading(true);
+      const alocacoesResponse = await TurmaService.getAllAlocacoes();
+      const todasAlocacoes = alocacoesResponse.data || [];
+      const Turmasresponse = await TurmaService.getAllTurmas();
+      const todasTurmas = Turmasresponse.data || [];
+      // 1️⃣ IDs das turmas já alocadas
+      const turmasAlocadasIds = new Set(
+        todasAlocacoes.map((alocacao) => alocacao.turma.id)
+      );
+
+      // 2️⃣ Turmas sem alocação
+      const turmasSemAlocacao = todasTurmas.filter(
+        (turma) => !turmasAlocadasIds.has(turma.id)
+      );
+
+      // 3️⃣ Agrupar por código de horário
+      const turmasPorHorario = turmasSemAlocacao.reduce((acc, turma) => {
+        const codigoHorario = turma.codigoHorario;
+
+        if (!acc[codigoHorario]) {
+          acc[codigoHorario] = [];
+        }
+
+        acc[codigoHorario].push(turma);
+        return acc;
+      }, {});
+
+      const salasDisponiveis = {};
+
+      for (const codigo of Object.keys(horarioMapping)) {
+        const diaSemanaReferencia =
+          horarioMapping[codigo][0].diaSemana;
+
+        const tempoAulaReferencia =
+          horarioMapping[codigo][0].tempoAula;
+
+        const responseSalasDisponiveis =
+          await SalaService.getAllSalasDisponiveis(
+            diaSemanaMap[diaSemanaReferencia],
+            tempoAulaReferencia
+          );
+
+        salasDisponiveis[codigo] = responseSalasDisponiveis.data || [];
+
+        // opcional: ordenar já por capacidade
+        salasDisponiveis[codigo].sort(
+          (a, b) => a.capacidadeMaxima - b.capacidadeMaxima
+        );
+      }
+
+
+      for (const codigoHorario of Object.keys(turmasPorHorario)) {
+        const turmasDoHorario = turmasPorHorario[codigoHorario];
+
+        for (const turma of turmasDoHorario) {
+          const codigoHorarioTurma = turma.codigoHorario;
+          const salasDoHorario = salasDisponiveis[codigoHorarioTurma] || [];
+
+          // 1️⃣ Filtrar salas válidas
+          const salasValidas = salasDoHorario.filter((sala) =>
+            salaAtendeTurma(sala, turma)
+          );
+
+          if (salasValidas.length === 0) {
+            console.warn(
+              "Nenhuma sala compatível para a turma",
+              turma.id,
+              "no horário",
+              codigoHorarioTurma
+            );
+            continue;
+          }
+
+          // 2️⃣ Ordenar por prioridade
+          salasValidas.sort(
+            (a, b) =>
+              custoSalaParaTurma(a, turma) -
+              custoSalaParaTurma(b, turma)
+          );
+
+          // 3️⃣ Escolher a melhor sala
+          const salaEscolhida = salasValidas[0];
+
+          // 4️⃣ Criar registros de alocação
+          const horarios = horarioMapping[codigoHorarioTurma];
+
+          for (const horario of horarios) {
+            const payload = {
+              idTurma: turma.id,
+              idSala: salaEscolhida.id,
+              diaSemana: diaSemanaMap[horario.diaSemana],
+              tempo: horario.tempoAula,
+            };
+
+            await TurmaService.createAlocacaoTurma(payload);
+          }
+
+          console.log(
+            "Turma",
+            turma.id,
+            "alocada na sala",
+            salaEscolhida.id
+          );
+
+          // 5️⃣ Remover sala usada
+          salasDisponiveis[codigoHorarioTurma] =
+            salasDoHorario.filter(
+              (sala) => sala.id !== salaEscolhida.id
+            );
+        }
+      }
+      window.location.reload();
+
     } catch (error) {
       console.error("Erro ao alocar turmas automaticamente:", error);
       alert("Erro ao alocar turmas automaticamente.");
